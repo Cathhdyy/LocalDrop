@@ -1,0 +1,22 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY . .
+
+RUN npm install
+RUN npm --workspace=@localdrop/protocol run build
+RUN npm --workspace=@localdrop/signaling run build
+
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=8787
+
+COPY --from=builder /app /app
+
+EXPOSE 8787
+
+CMD ["node", "apps/signaling/dist/index.js"]

@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
+const isVercel = Boolean(process.env.VERCEL);
+
 const nextConfig = {
-  output: 'export',
+  // Use static export for local CLI server, and standard Next.js on Vercel
+  ...(isVercel ? {} : { output: 'export', trailingSlash: true }),
   images: {
     unoptimized: true,
   },
-  trailingSlash: true,
   reactStrictMode: true,
 };
 
