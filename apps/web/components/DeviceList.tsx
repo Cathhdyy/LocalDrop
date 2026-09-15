@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Laptop, Smartphone, Monitor, Send, Radio, CheckCircle2 } from 'lucide-react';
+import { Laptop, Smartphone, Monitor, Send, Radio, CheckCircle2, QrCode, Wifi } from 'lucide-react';
 import { DeviceInfo, PlatformType } from '@localdrop/protocol';
 
 interface DeviceListProps {
@@ -28,65 +28,81 @@ export function DeviceList({
         return <Smartphone className="w-5 h-5 text-blue-400" />;
       case 'macos':
       case 'windows':
-        return <Laptop className="w-5 h-5 text-blue-400" />;
+        return <Laptop className="w-5 h-5 text-indigo-400" />;
       default:
-        return <Monitor className="w-5 h-5 text-blue-400" />;
+        return <Monitor className="w-5 h-5 text-purple-400" />;
     }
   };
 
   const getPlatformLabel = (platform: PlatformType) => {
     switch (platform) {
       case 'windows':
-        return 'Windows';
+        return 'Windows PC';
       case 'macos':
         return 'macOS';
       case 'ios':
-        return 'iOS';
+        return 'iPhone / iPad';
       case 'android':
         return 'Android';
       case 'linux':
         return 'Linux';
       default:
-        return 'Web';
+        return 'Web Client';
     }
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3.5">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
-          <span>Nearby Devices</span>
-          <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted font-normal text-muted-foreground">
-            {peers.length}
+        <div className="flex items-center gap-2">
+          <h2 className="text-xs uppercase font-mono font-bold tracking-wider text-muted-foreground">
+            Nearby Devices
+          </h2>
+          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold">
+            {peers.length} online
           </span>
-        </h2>
+        </div>
         {peers.length > 0 && (
-          <span className="text-xs text-muted-foreground">Tap a device to select</span>
+          <span className="text-xs text-muted-foreground">Tap a device to transfer</span>
         )}
       </div>
 
       {peers.length === 0 ? (
-        <div className="p-8 rounded-2xl border border-dashed border-border bg-card/50 text-center space-y-4">
-          <div className="relative w-12 h-12 mx-auto flex items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-blue-500/20 radar-ring" />
-            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-              <Radio className="w-5 h-5" />
+        /* AirDrop Radar Empty State */
+        <div className="relative overflow-hidden p-8 sm:p-12 rounded-3xl border border-border bg-card/40 text-center space-y-4">
+          <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
+            {/* Concentric radar rings */}
+            <div className="absolute inset-0 rounded-full border border-blue-500/20 radar-wave-1" />
+            <div className="absolute inset-2 rounded-full border border-blue-500/15 radar-wave-2" />
+            <div className="absolute inset-4 rounded-full border border-blue-500/10 radar-wave-3" />
+
+            {/* Center icon */}
+            <div className="relative z-10 w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <Radio className="w-6 h-6 animate-pulse" />
             </div>
           </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium text-foreground">Waiting for other devices...</h3>
-            <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-              Open LocalDrop on another phone or computer on this network.
+
+          <div className="space-y-1.5 max-w-sm mx-auto">
+            <h3 className="text-sm font-bold text-foreground">
+              Scanning for nearby devices...
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Open LocalDrop on another device on this Wi-Fi network, or scan the pairing QR code to connect immediately.
             </p>
           </div>
-          <button
-            onClick={onOpenQR}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border"
-          >
-            Show Pairing QR
-          </button>
+
+          <div className="pt-1">
+            <button
+              onClick={onOpenQR}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-muted hover:bg-muted/80 text-foreground transition-all border border-border active:scale-95 shadow-sm"
+            >
+              <QrCode className="w-4 h-4 text-blue-400" />
+              <span>Show Pairing QR Code</span>
+            </button>
+          </div>
         </div>
       ) : (
+        /* Connected Peer Cards Grid */
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {peers.map((peer) => {
             const isConnected = connectedPeerIds.includes(peer.deviceId);
@@ -101,42 +117,38 @@ export function DeviceList({
                   }
                   onSelectPeer(peer);
                 }}
-                className={`group relative p-4 rounded-2xl border transition-all cursor-pointer ${
+                className={`glow-card group relative p-4 rounded-2xl border transition-all cursor-pointer select-none ${
                   isSelected
-                    ? 'border-blue-500 bg-blue-500/5 shadow-md shadow-blue-500/10'
+                    ? 'border-blue-500 bg-blue-500/[0.06] shadow-lg shadow-blue-500/10'
                     : 'border-border bg-card hover:border-border/80 hover:bg-muted/40'
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                      {getDeviceIcon(peer.platform)}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 truncate">
+                    <div className="relative shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-muted/80 border border-border flex items-center justify-center shadow-inner">
+                        {getDeviceIcon(peer.platform)}
+                      </div>
+                      <span
+                        className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card ${
+                          isConnected ? 'bg-emerald-500' : 'bg-neutral-400'
+                        }`}
+                      />
                     </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-foreground group-hover:text-blue-500 transition-colors">
+
+                    <div className="truncate">
+                      <h4 className="text-sm font-bold text-foreground group-hover:text-blue-400 transition-colors truncate">
                         {peer.deviceName}
                       </h4>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-muted-foreground">
-                          {getPlatformLabel(peer.platform)}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">•</span>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 font-sans">
+                        <span>{getPlatformLabel(peer.platform)}</span>
+                        <span>•</span>
                         <span
-                          className={`text-xs flex items-center gap-1 ${
-                            isConnected ? 'text-emerald-500 font-medium' : 'text-muted-foreground'
+                          className={`font-medium ${
+                            isConnected ? 'text-emerald-400' : 'text-muted-foreground'
                           }`}
                         >
-                          {isConnected ? (
-                            <>
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                              Connected
-                            </>
-                          ) : (
-                            <>
-                              <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />
-                              Available
-                            </>
-                          )}
+                          {isConnected ? 'Connected' : 'Available'}
                         </span>
                       </div>
                     </div>
@@ -150,18 +162,23 @@ export function DeviceList({
                       }
                       onSelectPeer(peer);
                     }}
-                    className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
                       isSelected
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'bg-muted text-foreground hover:bg-muted/80'
                     }`}
                   >
                     {isSelected ? (
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Selected</span>
+                      </>
                     ) : (
-                      <Send className="w-3.5 h-3.5" />
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send</span>
+                      </>
                     )}
-                    <span className="hidden sm:inline">{isSelected ? 'Selected' : 'Send'}</span>
                   </button>
                 </div>
               </div>
