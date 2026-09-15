@@ -201,6 +201,15 @@ Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md).
 
 ---
 
-## 📄 License
+## 📄 License & Permissions
 
-Distributed under the MIT License. See [LICENSE](LICENSE) for more details.
+This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)** license.
+
+| Permission | Allowed? |
+|---|:---:|
+| 🏢 **Commercial Use** | ❌ **No** |
+| 🛠️ **Modification** | ✅ **Yes** |
+| 📦 **Distribution** | ✅ **Yes** |
+| 🔒 **Private Use** | ✅ **Yes** |
+
+You are free to share, adapt, and build upon this material in any medium or format for non-commercial purposes, provided appropriate attribution is given. See the full terms in the [LICENSE](LICENSE) file.
