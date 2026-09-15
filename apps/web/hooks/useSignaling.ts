@@ -24,14 +24,25 @@ export function useSignaling(device: DeviceInfo, roomId: string) {
   const connect = useCallback(() => {
     if (typeof window === 'undefined' || device.deviceId === 'init') return;
 
-    // Determine WebSocket URL
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // If running on dev server (port 3000), default signaling is on 8787
-    let host = window.location.host;
-    if (host.includes(':3000')) {
-      host = window.location.hostname + ':8787';
+    // Determine WebSocket URL (supports custom external signaling for Vercel/cloud deployments)
+    const customUrl =
+      process.env.NEXT_PUBLIC_SIGNALING_URL ||
+      (typeof localStorage !== 'undefined' ? localStorage.getItem('localdrop_signaling_url') : null);
+
+    let wsUrl: string;
+    if (customUrl) {
+      wsUrl = customUrl.replace(/^http/i, 'ws');
+      if (!wsUrl.endsWith('/ws') && !wsUrl.includes('?')) {
+        wsUrl = wsUrl.replace(/\/$/, '') + '/ws';
+      }
+    } else {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      let host = window.location.host;
+      if (host.includes(':3000')) {
+        host = window.location.hostname + ':8787';
+      }
+      wsUrl = `${protocol}//${host}/ws`;
     }
-    const wsUrl = `${protocol}//${host}/ws`;
 
     setStatus('connecting');
 

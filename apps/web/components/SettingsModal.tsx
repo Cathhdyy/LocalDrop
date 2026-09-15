@@ -136,6 +136,31 @@ export function SettingsModal({
           </button>
         </div>
 
+        {/* Custom Signaling Server (for Vercel & Cloud deployments) */}
+        <div className="pt-2 border-t border-border space-y-2">
+          <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5" />
+            Signaling Server (Vercel / Cloud)
+          </label>
+          <input
+            type="text"
+            defaultValue={typeof window !== 'undefined' ? localStorage.getItem('localdrop_signaling_url') || '' : ''}
+            placeholder="Auto (e.g. wss://my-signaling.railway.app)"
+            onBlur={(e) => {
+              const val = e.target.value.trim();
+              if (val) {
+                localStorage.setItem('localdrop_signaling_url', val);
+              } else {
+                localStorage.removeItem('localdrop_signaling_url');
+              }
+            }}
+            className="w-full px-3 py-2 rounded-xl bg-muted border border-border text-xs font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Leave blank for auto local network detection, or specify a custom WebSocket URL if hosted on Vercel.
+          </p>
+        </div>
+
         <button
           type="button"
           onClick={onClose}
