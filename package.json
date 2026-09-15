@@ -1,0 +1,31 @@
+{
+  "name": "localdrop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AirDrop for EVERY device - privacy-first P2P file sharing",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:signaling": "npm --workspace=@localdrop/signaling run dev",
+    "dev:web": "npm --workspace=@localdrop/web run dev",
+    "dev": "npm --workspace=localdrop run dev",
+    "build": "npm --workspace=@localdrop/protocol run build && npm --workspace=@localdrop/p2p run build && npm --workspace=@localdrop/signaling run build && npm --workspace=localdrop run build && npm --workspace=@localdrop/web run build",
+    "start": "node apps/cli/bin/localdrop.js",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  },
+  "keywords": [
+    "p2p",
+    "webrtc",
+    "airdrop",
+    "file-transfer",
+    "privacy"
+  ],
+  "author": "LocalDrop Team",
+  "license": "MIT"
+}

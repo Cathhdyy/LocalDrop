@@ -1,0 +1,17 @@
+{
+  "name": "@localdrop/p2p",
+  "version": "0.1.0",
+  "description": "High-performance WebRTC chunking, streaming, and connection engine for LocalDrop",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "@localdrop/protocol": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
