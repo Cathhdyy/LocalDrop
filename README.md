@@ -1,6 +1,12 @@
 <div align="center">
 
-# ⚡ LocalDrop
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="Logos/Logo-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="Logos/Logo.png">
+  <img alt="LocalDrop Logo" src="Logos/Logo.png" width="190">
+</picture>
+
+# LocalDrop
 
 ### AirDrop for EVERY Device.
 
