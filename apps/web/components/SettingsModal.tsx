@@ -108,20 +108,8 @@ export function SettingsModal({
           </div>
         </div>
 
-        {/* Creator & Source Code Info */}
+        {/* Source Code Info */}
         <div className="pt-3 border-t border-border/80 flex flex-col gap-2.5 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Made by</span>
-            <a
-              href="https://sanscarr.tech"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold text-foreground hover:text-blue-400 inline-flex items-center gap-1 underline underline-offset-2 transition-colors"
-            >
-              <span>Sanskar Sharma</span>
-              <ExternalLink className="w-3 h-3 text-blue-400" />
-            </a>
-          </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Source Code</span>
             <a

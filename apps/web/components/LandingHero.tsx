@@ -17,8 +17,6 @@ import {
   Layers,
   Sparkles,
   ExternalLink,
-  Play,
-  RotateCcw,
   Wifi,
   Radio,
   FileText,
@@ -68,21 +66,14 @@ const cardHover = {
 export function LandingHero({ onStartSharing }: LandingHeroProps) {
   const [copiedCli, setCopiedCli] = useState(false);
   const [simulationProgress, setSimulationProgress] = useState(72);
-  const [isSimulating, setIsSimulating] = useState(true);
 
   // Auto-run simulation transfer animation loop
   useEffect(() => {
-    if (!isSimulating) return;
     const interval = setInterval(() => {
-      setSimulationProgress((prev) => {
-        if (prev >= 100) {
-          return 0;
-        }
-        return Math.min(100, prev + 2);
-      });
+      setSimulationProgress((prev) => (prev >= 100 ? 0 : Math.min(100, prev + 2)));
     }, 120);
     return () => clearInterval(interval);
-  }, [isSimulating]);
+  }, []);
 
   const copyCliCommand = () => {
     navigator.clipboard.writeText('npx localdrop');
@@ -91,11 +82,11 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
   };
 
   return (
-    <div className="relative overflow-hidden py-6 sm:py-12 space-y-28">
+    <div className="relative overflow-hidden pt-2 pb-12 sm:pt-4 sm:pb-20 space-y-16 sm:space-y-24">
       {/* Ambient Animated Background Glow Orbs */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-blue-600/15 via-indigo-500/10 to-purple-600/15 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse" />
-      <div className="absolute top-[800px] -left-40 w-[450px] h-[450px] bg-blue-500/10 rounded-full blur-[140px] pointer-events-none -z-10" />
-      <div className="absolute top-[1400px] -right-40 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none -z-10" />
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-blue-600/15 via-indigo-500/10 to-purple-600/15 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse" />
+      <div className="absolute top-[700px] -left-40 w-[450px] h-[450px] bg-blue-500/10 rounded-full blur-[140px] pointer-events-none -z-10" />
+      <div className="absolute top-[1300px] -right-40 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none -z-10" />
 
       {/* ============================================================ */}
       {/* 1. HERO SECTION */}
@@ -104,10 +95,10 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
-        className="text-center space-y-8 max-w-4xl mx-auto px-4 pt-4 sm:pt-8"
+        className="text-center space-y-6 sm:space-y-7 max-w-4xl mx-auto px-4 pt-1 sm:pt-2"
       >
         {/* Top Badges */}
-        <motion.div variants={fadeInUp} custom={0} className="flex flex-wrap items-center justify-center gap-2.5">
+        <motion.div variants={fadeInUp} custom={0} className="flex items-center justify-center">
           <motion.div
             whileHover={{ scale: 1.05 }}
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-xs font-semibold text-blue-400 backdrop-blur-md shadow-sm"
@@ -115,24 +106,10 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
             <Sparkles className="w-3.5 h-3.5 animate-spin-slow" />
             <span>AirDrop for EVERY device</span>
           </motion.div>
-
-          <motion.a
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            href="https://sanscarr.tech"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border bg-card/80 hover:bg-muted text-xs font-medium text-foreground transition-all shadow-sm backdrop-blur-md group"
-          >
-            <span>
-              Made by <strong className="text-blue-400 font-bold underline underline-offset-2">Sanskar Sharma</strong>
-            </span>
-            <ExternalLink className="w-3 h-3 text-muted-foreground group-hover:text-blue-400 transition-colors" />
-          </motion.a>
         </motion.div>
 
         {/* Headline */}
-        <motion.div variants={fadeInUp} custom={1} className="space-y-4">
+        <motion.div variants={fadeInUp} custom={1} className="space-y-3 sm:space-y-4">
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-foreground leading-[1.08]">
             Transfer anything. <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-400 to-purple-500">
@@ -140,7 +117,7 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
             </span>
           </h1>
 
-          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Send multi-gigabyte files, 4K videos, folders, photos, and text directly over your local Wi-Fi.
             Zero cloud uploads. Zero account logins. No cables.
           </p>
@@ -164,11 +141,11 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
             href="https://github.com/Cathhdyy/LocalDrop"
             target="_blank"
             rel="noreferrer"
-            className="w-full sm:w-auto px-7 py-4 rounded-2xl font-semibold text-sm bg-card/80 hover:bg-muted text-foreground border border-border flex items-center justify-center gap-2 transition-all shadow-sm"
+            className="w-full sm:w-auto px-7 py-4 rounded-2xl font-semibold text-sm bg-card/80 hover:bg-muted text-foreground border border-white/[0.08] flex items-center justify-center gap-2 transition-all shadow-sm"
           >
             <Github className="w-4 h-4 text-foreground" />
             <span>View on GitHub</span>
-            <span className="ml-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-muted border border-border/80 text-muted-foreground font-bold">
+            <span className="ml-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-muted border border-white/[0.08] text-muted-foreground font-bold">
               ★ Star
             </span>
           </motion.a>
@@ -177,109 +154,100 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
         {/* ============================================================ */}
         {/* INTERACTIVE P2P TRANSFER SIMULATION MOCKUP */}
         {/* ============================================================ */}
-        <motion.div variants={fadeInUp} custom={3} className="pt-8">
-          <div className="relative max-w-2xl mx-auto rounded-3xl p-1 bg-gradient-to-b from-blue-500/30 via-border to-border/40 shadow-2xl">
-            <div className="p-6 sm:p-8 rounded-[22px] bg-card/95 backdrop-blur-xl border border-white/5 space-y-6">
-              {/* Header row with transfer status */}
-              <div className="flex items-center justify-between border-b border-border/60 pb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs font-mono font-bold tracking-wide uppercase text-foreground">
-                    Direct P2P WebRTC DataChannel
-                  </span>
+        <motion.div variants={fadeInUp} custom={3} className="pt-2 sm:pt-4">
+          <div className="relative max-w-2xl mx-auto rounded-3xl bg-card/80 backdrop-blur-xl border border-white/[0.05] shadow-2xl p-6 sm:p-8 space-y-6">
+            {/* Header row with transfer status */}
+            <div className="flex items-center justify-between pb-1">
+              <div className="flex items-center gap-2.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-mono font-bold tracking-wide uppercase text-foreground">
+                  Direct P2P WebRTC DataChannel
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  64KB Slices
+                </span>
+              </div>
+            </div>
+
+            {/* Devices visualization */}
+            <div className="grid grid-cols-12 gap-3 items-center">
+              {/* Device 1 (Sender PC) */}
+              <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                className="col-span-4 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors flex items-center gap-3 text-left"
+              >
+                <div className="w-11 h-11 rounded-xl bg-blue-500/15 flex items-center justify-center text-blue-400 shrink-0">
+                  <Laptop className="w-5 h-5" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setIsSimulating(!isSimulating)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {isSimulating ? <RotateCcw className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                    <span>{isSimulating ? 'Pause Loop' : 'Play Loop'}</span>
-                  </button>
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">
-                    64KB Slices
-                  </span>
+                <div className="truncate">
+                  <div className="text-xs font-bold text-foreground truncate">MacBook Pro</div>
+                  <div className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    Sender
+                  </div>
                 </div>
+              </motion.div>
+
+              {/* Animated Transfer Beam (Center) */}
+              <div className="col-span-4 flex flex-col items-center justify-center px-1">
+                <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-blue-400 mb-1">
+                  <Zap className="w-3.5 h-3.5 fill-blue-400 animate-bounce" />
+                  <span>28.4 MB/s</span>
+                </div>
+
+                {/* Flow beam line with animated packet */}
+                <div className="relative w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    className="absolute top-0 bottom-0 bg-gradient-to-r from-blue-500 via-indigo-400 to-purple-500 rounded-full"
+                    style={{ width: `${simulationProgress}%` }}
+                  />
+                  <motion.div
+                    className="absolute top-0 w-8 h-full bg-white/60 blur-[2px] rounded-full"
+                    animate={{ left: ['-20%', '100%'] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+                  />
+                </div>
+
+                <span className="text-[10px] text-muted-foreground mt-1 font-mono">
+                  {simulationProgress}% • {((2.4 * simulationProgress) / 100).toFixed(1)} / 2.4 GB
+                </span>
               </div>
 
-              {/* Devices visualization */}
-              <div className="grid grid-cols-12 gap-3 items-center">
-                {/* Device 1 (Sender PC) */}
-                <motion.div
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="col-span-4 p-3.5 rounded-2xl bg-muted/50 border border-border/80 flex items-center gap-3 text-left"
-                >
-                  <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0 shadow-inner">
-                    <Laptop className="w-5 h-5" />
+              {/* Device 2 (Receiver Phone) */}
+              <motion.div
+                animate={{ y: [0, 4, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+                className="col-span-4 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors flex items-center gap-3 text-right justify-end"
+              >
+                <div className="truncate">
+                  <div className="text-xs font-bold text-foreground truncate">iPhone 16 Pro</div>
+                  <div className="text-[10px] text-blue-400 font-semibold flex items-center justify-end gap-1">
+                    Receiver
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
                   </div>
-                  <div className="truncate">
-                    <div className="text-xs font-bold text-foreground truncate">Sanskar&#39;s PC</div>
-                    <div className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      Sender
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Animated Transfer Beam (Center) */}
-                <div className="col-span-4 flex flex-col items-center justify-center px-1">
-                  <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-blue-400 mb-1">
-                    <Zap className="w-3.5 h-3.5 fill-blue-400 animate-bounce" />
-                    <span>28.4 MB/s</span>
-                  </div>
-
-                  {/* Flow beam line with animated packet */}
-                  <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden border border-border/40">
-                    <motion.div
-                      className="absolute top-0 bottom-0 bg-gradient-to-r from-blue-500 via-indigo-400 to-purple-500 rounded-full"
-                      style={{ width: `${simulationProgress}%` }}
-                    />
-                    <motion.div
-                      className="absolute top-0 w-8 h-full bg-white/60 blur-[2px] rounded-full"
-                      animate={{ left: ['-20%', '100%'] }}
-                      transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-                    />
-                  </div>
-
-                  <span className="text-[10px] text-muted-foreground mt-1 font-mono">
-                    {simulationProgress}% • {( (2.4 * simulationProgress) / 100 ).toFixed(1)} / 2.4 GB
-                  </span>
                 </div>
+                <div className="w-11 h-11 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 shrink-0">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+              </motion.div>
+            </div>
 
-                {/* Device 2 (Receiver Phone) */}
-                <motion.div
-                  animate={{ y: [0, 4, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-                  className="col-span-4 p-3.5 rounded-2xl bg-muted/50 border border-border/80 flex items-center gap-3 text-right justify-end"
-                >
-                  <div className="truncate">
-                    <div className="text-xs font-bold text-foreground truncate">iPhone 16 Pro</div>
-                    <div className="text-[10px] text-blue-400 font-semibold flex items-center justify-end gap-1">
-                      Receiver
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                    </div>
-                  </div>
-                  <div className="w-11 h-11 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                    <Smartphone className="w-5 h-5" />
-                  </div>
-                </motion.div>
+            {/* Active file metadata pill */}
+            <div className="p-3.5 rounded-2xl bg-white/[0.02] flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2.5 truncate">
+                <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 shrink-0">
+                  <FileText className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-semibold text-foreground truncate">
+                  raw_cinema_4k_footage.mov
+                </span>
               </div>
-
-              {/* Active file metadata pill */}
-              <div className="p-3 rounded-2xl bg-card border border-border/70 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2.5 truncate">
-                  <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
-                    <FileText className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="font-semibold text-foreground truncate">
-                    raw_cinema_4k_footage.mov
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-muted-foreground font-mono text-[11px] shrink-0">
-                  <span>SHA-256 Verified</span>
-                  <span className="text-emerald-400 font-bold">✓ 0 Errors</span>
-                </div>
+              <div className="flex items-center gap-3 text-muted-foreground font-mono text-[11px] shrink-0">
+                <span>SHA-256 Verified</span>
+                <span className="text-emerald-400 font-bold">✓ 0 Errors</span>
               </div>
             </div>
           </div>
@@ -314,7 +282,7 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
                 key={item.name}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className="px-4 py-2.5 rounded-2xl bg-card border border-border text-xs font-semibold text-foreground flex items-center gap-2 shadow-sm transition-colors hover:border-blue-500/40"
+                className="px-4 py-2.5 rounded-2xl bg-card/70 border border-white/[0.05] text-xs font-semibold text-foreground flex items-center gap-2 shadow-sm transition-colors hover:border-blue-500/40"
               >
                 <Icon className="w-4 h-4 text-blue-400" />
                 <span>{item.name}</span>
@@ -383,7 +351,7 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
                 whileHover="hover"
                 initial="rest"
                 animate="rest"
-                className="relative group p-7 rounded-3xl bg-card border border-border overflow-hidden transition-colors hover:border-blue-500/50"
+                className="relative group p-7 rounded-3xl bg-card/70 border border-white/[0.05] overflow-hidden transition-colors hover:border-blue-500/50"
               >
                 <div className="flex items-center justify-between mb-5">
                   <span className="text-3xl font-black font-mono text-muted-foreground/30 group-hover:text-blue-500/60 transition-colors">
@@ -454,9 +422,9 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
                 variants={fadeInUp}
                 custom={i}
                 whileHover={{ y: -4, scale: 1.02 }}
-                className="p-6 rounded-3xl bg-card border border-border hover:border-blue-500/40 transition-all space-y-3 shadow-sm"
+                className="p-6 rounded-3xl bg-card/70 border border-white/[0.05] hover:border-blue-500/40 transition-all space-y-3 shadow-sm"
               >
-                <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center ${item.color}`}>
+                <div className={`w-11 h-11 rounded-2xl border border-white/[0.05] flex items-center justify-center ${item.color}`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <h4 className="font-bold text-sm text-foreground">{item.title}</h4>
@@ -480,7 +448,7 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
         <motion.div
           variants={fadeInUp}
           whileHover={{ scale: 1.01 }}
-          className="p-8 sm:p-10 rounded-3xl bg-gradient-to-b from-card to-muted/40 border border-border shadow-2xl text-center space-y-6"
+          className="p-8 sm:p-10 rounded-3xl bg-gradient-to-b from-card/80 to-muted/30 border border-white/[0.05] shadow-2xl text-center space-y-6"
         >
           <div className="space-y-2">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-blue-400">
@@ -566,20 +534,6 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
           >
             <Github className="w-4 h-4" />
             <span>⭐ Star on GitHub</span>
-          </motion.a>
-
-          <motion.a
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            href="https://sanscarr.tech"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl text-xs font-bold bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition-all shadow-sm active:scale-95 group"
-          >
-            <span>
-              Made by <strong className="font-bold underline underline-offset-2">Sanskar Sharma</strong>
-            </span>
-            <ExternalLink className="w-3.5 h-3.5 text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </motion.a>
         </motion.div>
       </motion.section>
