@@ -16,19 +16,11 @@ import {
   Check,
   Layers,
   Sparkles,
-  ExternalLink,
-  Radio,
   FileText,
-  HardDrive,
-  Cpu,
   ChevronDown,
-  Star,
   Activity,
   CheckCircle2,
   Terminal,
-  Share2,
-  Download,
-  Wifi,
 } from 'lucide-react';
 
 interface LandingHeroProps {
@@ -520,63 +512,80 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 5. USER TESTIMONIALS (ACCORDING TO REFERENCE "WHAT USERS SAY")*/}
+      {/* 5. WHY LOCALDROP WINS (THE 3 CORE ADVANTAGES)                 */}
       {/* ============================================================ */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14 space-y-10">
         <div className="text-center space-y-2 max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-foreground">
-            What <span className="text-blue-500">Users</span> Say!
+            Why <span className="text-blue-500">LocalDrop?</span>
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-            See how LocalDrop helps creators, engineers, and everyday users move data without friction.
+            How direct hardware-to-hardware streaming fundamentally outperforms cloud storage and closed ecosystems.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {[
             {
-              name: 'Alex Rivera',
-              role: 'Video Editor & Colorist',
-              quote: 'Finally I can send 8GB ProRes footage from my Windows editing workstation to my MacBook Pro in seconds without having to upload to Google Drive or use a flash drive.',
+              stat: 'Up to 100+ MB/s',
+              title: 'Direct Hardware Speed',
+              desc: 'Cloud services like Google Drive and WeTransfer force you to upload to a remote data center before downloading. LocalDrop streams data across your local Wi-Fi router at raw physical bandwidth.',
+              badge: '10x Faster than Cloud',
+              icon: Zap,
+              color: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
             },
             {
-              name: 'Sarah Chen',
-              role: 'Full-Stack Developer',
-              quote: 'The Universal Live Clipboard sync between Linux and my iPhone is magic. I copy an API token on my terminal, and a discreet pill pops up on my phone instantly.',
+              stat: '0 Bytes Stored',
+              title: 'True Zero-Knowledge Privacy',
+              desc: 'Your files stream directly memory-to-memory between paired devices using WebRTC DTLS 1.3 encryption. No third-party accounts, no tracking cookies, and zero permanent server storage.',
+              badge: 'RAM-to-RAM Encryption',
+              icon: ShieldCheck,
+              color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
             },
             {
-              name: 'Marcus Vance',
-              role: 'Music Producer',
-              quote: 'Zero account logins, zero cloud storage, zero tracking. It is literally AirDrop for EVERY device. I recommend this to my entire audio studio team.',
+              stat: '5 Ecosystems',
+              title: 'Zero Vendor Lock-In',
+              desc: 'Apple AirDrop locks you to Apple devices. Quick Share focuses on Android. LocalDrop bridges iOS, Android, Windows, Mac, and Linux without requiring anyone to buy into a single walled garden.',
+              badge: 'Universal Compatibility',
+              icon: Layers,
+              color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
             },
-          ].map((item) => (
-            <div
-              key={item.name}
-              className="p-6 rounded-3xl bg-card/70 border border-white/[0.06] space-y-4 shadow-sm flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                {/* 5-star rating matching reference */}
-                <div className="flex items-center gap-1 text-amber-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed italic">
-                  "{item.quote}"
-                </p>
-              </div>
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.title}
+                className="p-6 rounded-3xl bg-card/70 border border-white/[0.06] hover:border-blue-500/40 transition-all space-y-5 shadow-sm flex flex-col justify-between group"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center ${item.color}`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-foreground px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
+                      {item.stat}
+                    </span>
+                  </div>
 
-              <div className="flex items-center gap-3 pt-2 border-t border-white/[0.05]">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
-                  {item.name.charAt(0)}
+                  <div className="space-y-1.5">
+                    <h3 className="font-extrabold text-base text-foreground group-hover:text-blue-400 transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-xs font-bold text-foreground">{item.name}</h4>
-                  <span className="text-[10px] text-muted-foreground">{item.role}</span>
+
+                <div className="pt-3 border-t border-white/[0.05]">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-blue-400">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
+                    <span>{item.badge}</span>
+                  </span>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
