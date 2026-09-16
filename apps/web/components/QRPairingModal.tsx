@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Copy, Check, Smartphone, Wifi } from 'lucide-react';
 
@@ -18,23 +19,12 @@ export function QRPairingModal({ isOpen, onClose, roomId }: QRPairingModalProps)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Fetch primary network address from server if available
-    fetch('/api/network')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.primaryIp) {
-          setPrimaryIp(data.primaryIp);
-          const portStr = data.port ? `:${data.port}` : '';
-          setLanUrl(`http://${data.primaryIp}${portStr}?room=${roomId}`);
-        } else {
-          setLanUrl(`${window.location.origin}?room=${roomId}`);
-        }
-      })
-      .catch(() => {
-        // Fallback to origin
-        setLanUrl(`${window.location.origin}?room=${roomId}`);
-      });
-  }, [roomId, isOpen]);
+    const hostname = window.location.hostname;
+    const port = window.location.port ? `:${window.location.port}` : '';
+    const protocol = window.location.protocol;
+    setPrimaryIp(hostname);
+    setLanUrl(`${protocol}//${hostname}${port}/?room=${roomId}`);
+  }, [roomId]);
 
   if (!isOpen) return null;
 
@@ -51,7 +41,13 @@ export function QRPairingModal({ isOpen, onClose, roomId }: QRPairingModalProps)
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-border">
           <div className="flex items-center gap-2">
-            <span className="text-xl">⚡</span>
+            <Image
+              src="/favicon.png"
+              alt="LocalDrop Logo"
+              width={22}
+              height={22}
+              className="w-5 h-5 object-contain drop-shadow-[0_1px_4px_rgba(37,99,235,0.35)]"
+            />
             <span className="font-bold text-foreground">Pair Another Device</span>
           </div>
           <button

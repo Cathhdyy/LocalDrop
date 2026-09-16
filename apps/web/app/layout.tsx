@@ -2,10 +2,23 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://localdropp.vercel.app'),
   title: 'LocalDrop — AirDrop for EVERY device',
   description: 'Privacy-first peer-to-peer file and text sharing between all devices without accounts or cloud storage.',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png' },
+    ],
+    shortcut: '/favicon.png',
+  },
+  openGraph: {
+    title: 'LocalDrop — AirDrop for EVERY device',
+    description: 'Privacy-first peer-to-peer file and text sharing between all devices without accounts or cloud storage.',
+    images: [{ url: '/logo.png' }],
   },
 };
 

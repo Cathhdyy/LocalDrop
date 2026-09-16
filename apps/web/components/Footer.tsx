@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Github, Shield, FileText, Scale, Sparkles, ExternalLink, Info } from 'lucide-react';
 import { LegalTab } from './LegalModal';
 
@@ -20,13 +21,19 @@ export function Footer({ onOpenAbout, onOpenLegal }: FooterProps) {
           {/* Brand & Mission Statement */}
           <div className="md:col-span-5 space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-blue-500/20">
-                ⚡
+              <div className="relative shrink-0 flex items-center justify-center">
+                <Image
+                  src="/favicon.png"
+                  alt="LocalDrop Logo"
+                  width={28}
+                  height={28}
+                  className="w-7 h-7 object-contain drop-shadow-[0_2px_6px_rgba(37,99,235,0.35)]"
+                />
               </div>
               <span className="font-extrabold text-base tracking-tight text-foreground">
-                LocalDrop
+                Local<span className="text-blue-600 dark:text-blue-400">Drop</span>
               </span>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <span className="text-[9px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 leading-none">
                 P2P
               </span>
             </div>

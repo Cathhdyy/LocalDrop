@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import {
   QrCode,
   Settings,
@@ -13,7 +14,6 @@ import {
   Volume2,
   VolumeX,
   Github,
-  Zap,
 } from 'lucide-react';
 import { DeviceInfo, PlatformType } from '@localdrop/protocol';
 import { ConnectionStatus } from '../hooks/useSignaling';
@@ -63,7 +63,7 @@ export function Navbar({
         {/* Brand / Logo */}
         <div
           onClick={onLogoClick}
-          className="flex items-center gap-3 cursor-pointer select-none group shrink-0"
+          className="flex items-center gap-2.5 cursor-pointer select-none group shrink-0"
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
@@ -73,32 +73,34 @@ export function Navbar({
           }}
           title="Toggle Home / Sharing"
         >
-          <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 rounded-2xl blur-sm opacity-30 group-hover:opacity-75 transition duration-300" />
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white font-black shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform">
-              <Zap className="w-5 h-5 fill-white" />
-            </div>
+          <div className="relative shrink-0 flex items-center justify-center">
+            <Image
+              src="/favicon.png"
+              alt="LocalDrop Logo"
+              width={36}
+              height={36}
+              className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-[0_2px_8px_rgba(37,99,235,0.4)] group-hover:drop-shadow-[0_4px_14px_rgba(37,99,235,0.65)] group-hover:scale-105 transition-all duration-200"
+              priority
+            />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-black text-base sm:text-lg tracking-tight text-foreground group-hover:text-blue-400 transition-colors">
-                LocalDrop
-              </span>
-              <span className="text-[10px] uppercase font-mono font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                P2P
-              </span>
-              {/* Mobile status indicator dot */}
-              <span
-                className={`md:hidden w-2 h-2 rounded-full ${
-                  status === 'connected'
-                    ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]'
-                    : status === 'connecting'
-                    ? 'bg-amber-400 animate-ping'
-                    : 'bg-rose-500'
-                }`}
-                title={`Status: ${status}`}
-              />
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-[17px] sm:text-[19px] tracking-tight text-foreground group-hover:opacity-95 transition-opacity">
+              Local<span className="text-blue-600 dark:text-blue-400 group-hover:text-blue-500 dark:group-hover:text-blue-300 transition-colors">Drop</span>
+            </span>
+            <span className="text-[9px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 leading-none">
+              P2P
+            </span>
+            {/* Mobile status indicator dot */}
+            <span
+              className={`md:hidden w-2 h-2 rounded-full ${
+                status === 'connected'
+                  ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+                  : status === 'connecting'
+                  ? 'bg-amber-400 animate-ping'
+                  : 'bg-rose-500'
+              }`}
+              title={`Status: ${status}`}
+            />
           </div>
         </div>
 
