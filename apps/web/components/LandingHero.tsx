@@ -17,6 +17,7 @@ import {
   FolderSync,
   Layers,
   Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 
 interface LandingHeroProps {
@@ -36,9 +37,20 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
     <div className="space-y-24 py-8">
       {/* Hero Section */}
       <section className="text-center space-y-8 max-w-4xl mx-auto px-4 pt-6">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-xs font-semibold text-blue-400">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>AirDrop for EVERY device</span>
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-xs font-semibold text-blue-400">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>AirDrop for EVERY device</span>
+          </div>
+          <a
+            href="https://sanscarr.tech"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border bg-card/80 hover:bg-muted text-xs font-medium text-foreground transition-all shadow-sm group"
+          >
+            <span>Made by <strong className="text-blue-400 font-bold underline underline-offset-2">Sanskar Sharma</strong></span>
+            <ExternalLink className="w-3 h-3 text-muted-foreground group-hover:text-blue-400 transition-colors" />
+          </a>
         </div>
 
         <div className="space-y-4">
@@ -250,21 +262,36 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
         </div>
       </section>
 
-      {/* GitHub CTA */}
-      <section className="text-center max-w-2xl mx-auto px-4 space-y-4">
-        <h3 className="text-2xl font-bold text-foreground">Open Source. Self-Hostable.</h3>
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          Built for everyone who wants fast, private, direct sharing between their devices.
-        </p>
-        <a
-          href="https://github.com/localdrop/localdrop"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground border border-border transition-colors shadow-sm"
-        >
-          <Github className="w-4 h-4" />
-          <span>⭐ Star on GitHub</span>
-        </a>
+      {/* GitHub CTA & Creator Attribution */}
+      <section className="text-center max-w-2xl mx-auto px-4 space-y-5">
+        <div className="space-y-2">
+          <h3 className="text-2xl sm:text-3xl font-bold text-foreground">Open Source. Self-Hostable.</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Built for everyone who wants fast, private, direct sharing between their devices.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="https://github.com/Cathhdyy/LocalDrop"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold bg-foreground text-background hover:bg-foreground/90 transition-all shadow-md active:scale-95"
+          >
+            <Github className="w-4 h-4" />
+            <span>⭐ Star on GitHub</span>
+          </a>
+
+          <a
+            href="https://sanscarr.tech"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground border border-border transition-all shadow-sm active:scale-95"
+          >
+            <span>Made by <strong className="text-blue-400 font-bold">Sanskar Sharma</strong></span>
+            <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
+          </a>
+        </div>
       </section>
     </div>
   );

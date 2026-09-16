@@ -12,6 +12,7 @@ import {
   Monitor,
   Volume2,
   VolumeX,
+  Github,
 } from 'lucide-react';
 import { DeviceInfo, PlatformType } from '@localdrop/protocol';
 import { ConnectionStatus } from '../hooks/useSignaling';
@@ -170,6 +171,18 @@ export function Navbar({
           >
             <Settings className="w-4 h-4" />
           </button>
+
+          {/* GitHub Repo */}
+          <a
+            href="https://github.com/Cathhdyy/LocalDrop"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Star LocalDrop on GitHub"
+            aria-label="GitHub Repository"
+            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <Github className="w-4 h-4" />
+          </a>
         </div>
       </div>
     </header>

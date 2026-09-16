@@ -18,7 +18,7 @@ Transfer files, folders, 4K videos, photos, and text directly between your devic
 
 <br />
 
-[**Try Live Demo**](https://localdropp.vercel.app) • [**Architecture**](docs/ARCHITECTURE.md) • [**Security Model**](docs/SECURITY.md) • [**Deploy Guide**](docs/DEPLOYMENT.md) • [**Report Bug**](https://github.com/Cathhdyy/LocalDrop/issues)
+[**Try Live Demo**](https://localdropp.vercel.app) • [**Made by Sanskar Sharma**](https://sanscarr.tech) • [**GitHub Repo**](https://github.com/Cathhdyy/LocalDrop) • [**Architecture**](docs/ARCHITECTURE.md) • [**Security Model**](docs/SECURITY.md)
 
 </div>
 
@@ -272,5 +272,5 @@ See the complete terms in the [LICENSE](LICENSE) file.
 ---
 
 <div align="center">
-  <sub>Built with ❤️ by the LocalDrop Contributors • AirDrop for EVERY Device</sub>
+  <p>Made with ❤️ by <a href="https://sanscarr.tech"><strong>Sanskar Sharma</strong></a> • <a href="https://github.com/Cathhdyy/LocalDrop">GitHub</a> • AirDrop for EVERY Device</p>
 </div>

@@ -130,13 +130,13 @@ export function Footer({ onOpenAbout, onOpenLegal }: FooterProps) {
         {/* Bottom Attribution Bar */}
         <div className="mt-8 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           {/* Creator Attribution */}
-          <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-start">
-            <span>Made by</span>
+          <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+            <span className="text-foreground font-medium">Made by</span>
             <a
               href="https://sanscarr.tech"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-bold text-foreground hover:text-blue-400 inline-flex items-center gap-1 underline underline-offset-4 decoration-blue-500/40 hover:decoration-blue-400 transition-colors"
+              className="px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400 font-bold hover:bg-blue-500/20 hover:border-blue-500/40 transition-all inline-flex items-center gap-1.5 shadow-sm active:scale-95"
             >
               <span>Sanskar Sharma</span>
               <ExternalLink className="w-3 h-3" />
