@@ -99,4 +99,33 @@ export const soundEffects = {
       osc.stop(now + 0.05);
     } catch (e) {}
   },
+
+  // Gentle high notification chime for incoming clipboard / alert
+  playNotification: () => {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      [
+        { freq: 880, time: 0 },       // A5
+        { freq: 1174.66, time: 0.08 }, // D6
+      ].forEach(({ freq, time }) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + time);
+
+        gain.gain.setValueAtTime(0.07, now + time);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + time + 0.25);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + time);
+        osc.stop(now + time + 0.25);
+      });
+    } catch (e) {}
+  },
 };

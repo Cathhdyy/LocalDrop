@@ -146,6 +146,15 @@ export type DataChannelMessage =
       senderName: string;
     }
   | {
+      type: 'clipboard-share';
+      id: string;
+      content: string;
+      contentType: 'text' | 'url' | 'code' | 'color';
+      senderName: string;
+      senderPlatform: PlatformType;
+      timestamp: number;
+    }
+  | {
       type: 'rtt-ping';
       timestamp: number;
     }
@@ -201,6 +210,18 @@ export interface SharedTextMessage {
   senderId: string;
   timestamp: number;
   direction: 'sent' | 'received';
+}
+
+export interface SharedClipboardItem {
+  id: string;
+  content: string;
+  contentType: 'text' | 'url' | 'code' | 'color';
+  senderName: string;
+  senderPlatform: PlatformType;
+  senderId: string;
+  timestamp: number;
+  direction: 'sent' | 'received';
+  copiedAt?: number;
 }
 
 export interface WebRTCDiagnostics {

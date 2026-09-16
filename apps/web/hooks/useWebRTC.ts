@@ -7,6 +7,7 @@ import {
   TransferProgress,
   TransferHistoryItem,
   SharedTextMessage,
+  SharedClipboardItem,
   WebRTCDiagnostics,
   RTCSignalPayload,
 } from '@localdrop/protocol';
@@ -16,6 +17,32 @@ import {
   FileChunkReceiver,
   calculateSHA256,
 } from '@localdrop/p2p';
+
+export function detectContentType(content: string): 'text' | 'url' | 'code' | 'color' {
+  const trimmed = content.trim();
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(trimmed) || /^rgba?\((\d+,\s*){2,3}\d+(\.\d+)?\)$/i.test(trimmed)) {
+    return 'color';
+  }
+  if (/^https?:\/\/[^\s]+$/i.test(trimmed)) {
+    return 'url';
+  }
+  if (
+    trimmed.includes('const ') ||
+    trimmed.includes('function ') ||
+    trimmed.includes('import ') ||
+    trimmed.includes('export ') ||
+    trimmed.includes('class ') ||
+    trimmed.includes('def ') ||
+    trimmed.includes('return ') ||
+    trimmed.includes('=>') ||
+    trimmed.includes('{}') ||
+    (trimmed.includes('{') && trimmed.includes('}')) ||
+    trimmed.split('\n').length > 3
+  ) {
+    return 'code';
+  }
+  return 'text';
+}
 
 export interface IncomingTransferPrompt {
   transferId: string;
@@ -38,6 +65,8 @@ export function useWebRTC(
   const [currentTransfer, setCurrentTransfer] = useState<TransferProgress | null>(null);
   const [incomingTransfer, setIncomingTransfer] = useState<IncomingTransferPrompt | null>(null);
   const [textMessages, setTextMessages] = useState<SharedTextMessage[]>([]);
+  const [clipboardItems, setClipboardItems] = useState<SharedClipboardItem[]>([]);
+  const [incomingClipboardPill, setIncomingClipboardPill] = useState<SharedClipboardItem | null>(null);
   const [history, setHistory] = useState<TransferHistoryItem[]>([]);
   const [diagnostics, setDiagnostics] = useState<WebRTCDiagnostics>({
     iceConnectionState: 'uninitialized',
@@ -54,12 +83,16 @@ export function useWebRTC(
   const activeSenderRef = useRef<FileChunkSender | null>(null);
   const activeReceiverRef = useRef<FileChunkReceiver | null>(null);
 
-  // Load history from localStorage
+  // Load history & clipboard from localStorage
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('localdrop_history');
-      if (stored) {
-        setHistory(JSON.parse(stored));
+      const storedHistory = localStorage.getItem('localdrop_history');
+      if (storedHistory) {
+        setHistory(JSON.parse(storedHistory));
+      }
+      const storedClipboard = localStorage.getItem('localdrop_clipboard_history');
+      if (storedClipboard) {
+        setClipboardItems(JSON.parse(storedClipboard));
       }
     } catch (e) {}
   }, []);
@@ -69,6 +102,17 @@ export function useWebRTC(
       const updated = [item, ...prev.slice(0, 49)];
       try {
         localStorage.setItem('localdrop_history', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  }, []);
+
+  const saveClipboardItem = useCallback((item: SharedClipboardItem) => {
+    setClipboardItems((prev) => {
+      const filtered = prev.filter((i) => i.id !== item.id && i.content !== item.content);
+      const updated = [item, ...filtered.slice(0, 49)];
+      try {
+        localStorage.setItem('localdrop_clipboard_history', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -236,6 +280,22 @@ export function useWebRTC(
           break;
         }
 
+        case 'clipboard-share': {
+          const receivedItem: SharedClipboardItem = {
+            id: msg.id,
+            content: msg.content,
+            contentType: msg.contentType,
+            senderName: msg.senderName,
+            senderPlatform: msg.senderPlatform,
+            senderId: senderPeerId,
+            timestamp: msg.timestamp,
+            direction: 'received',
+          };
+          saveClipboardItem(receivedItem);
+          setIncomingClipboardPill(receivedItem);
+          break;
+        }
+
         case 'rtt-ping': {
           const peer = peersRef.current.get(senderPeerId);
           peer?.sendControlMessage({ type: 'rtt-pong', timestamp: msg.timestamp });
@@ -243,7 +303,7 @@ export function useWebRTC(
         }
       }
     },
-    [currentTransfer, saveHistoryItem]
+    [currentTransfer, saveHistoryItem, saveClipboardItem]
   );
 
   // Send a file to a peer
@@ -490,11 +550,93 @@ export function useWebRTC(
     [device]
   );
 
+  // Send clipboard content to a peer or broadcast to all connected peers
+  const sendClipboard = useCallback(
+    (targetPeerId: string | 'all', content: string) => {
+      const trimmed = content.trim();
+      if (!trimmed) return false;
+
+      const contentType = detectContentType(trimmed);
+      const item: SharedClipboardItem = {
+        id: 'clip_' + Math.random().toString(36).substring(2, 11),
+        content: trimmed,
+        contentType,
+        senderName: device.deviceName,
+        senderPlatform: device.platform,
+        senderId: device.deviceId,
+        timestamp: Date.now(),
+        direction: 'sent',
+      };
+
+      let sentCount = 0;
+      if (targetPeerId === 'all') {
+        peersRef.current.forEach((peer) => {
+          if (peer.isConnected()) {
+            const ok = peer.sendControlMessage({
+              type: 'clipboard-share',
+              id: item.id,
+              content: item.content,
+              contentType: item.contentType,
+              senderName: item.senderName,
+              senderPlatform: item.senderPlatform,
+              timestamp: item.timestamp,
+            });
+            if (ok) sentCount++;
+          }
+        });
+      } else {
+        const peer = peersRef.current.get(targetPeerId);
+        if (peer && peer.isConnected()) {
+          const ok = peer.sendControlMessage({
+            type: 'clipboard-share',
+            id: item.id,
+            content: item.content,
+            contentType: item.contentType,
+            senderName: item.senderName,
+            senderPlatform: item.senderPlatform,
+            timestamp: item.timestamp,
+          });
+          if (ok) sentCount++;
+        }
+      }
+
+      if (sentCount > 0) {
+        saveClipboardItem(item);
+        return true;
+      }
+      return false;
+    },
+    [device, saveClipboardItem]
+  );
+
+  const dismissClipboardPill = useCallback(() => {
+    setIncomingClipboardPill(null);
+  }, []);
+
+  const deleteClipboardItem = useCallback((id: string) => {
+    setClipboardItems((prev) => {
+      const updated = prev.filter((i) => i.id !== id);
+      try {
+        localStorage.setItem('localdrop_clipboard_history', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  }, []);
+
+  const clearClipboardHistory = useCallback(() => {
+    setClipboardItems([]);
+    try {
+      localStorage.removeItem('localdrop_clipboard_history');
+    } catch (e) {}
+  }, []);
+
   return {
     connectedPeerIds,
     currentTransfer,
     incomingTransfer,
     textMessages,
+    clipboardItems,
+    incomingClipboardPill,
     history,
     diagnostics,
     connectToPeer,
@@ -503,6 +645,10 @@ export function useWebRTC(
     rejectIncomingTransfer,
     cancelTransfer,
     sendText,
+    sendClipboard,
+    dismissClipboardPill,
+    deleteClipboardItem,
+    clearClipboardHistory,
     clearCurrentTransfer: () => setCurrentTransfer(null),
   };
 }

@@ -15,15 +15,18 @@ import { LandingHero } from '../components/LandingHero';
 import { Footer } from '../components/Footer';
 import { LegalModal, LegalTab } from '../components/LegalModal';
 import { ToastContainer, ToastMessage } from '../components/Toast';
+import { LiveClipboardPill } from '../components/LiveClipboardPill';
+import { ClipboardManager } from '../components/ClipboardManager';
 import { useDevice } from '../hooks/useDevice';
 import { useSignaling } from '../hooks/useSignaling';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { soundEffects } from '../utils/audio';
 import { DeviceInfo } from '@localdrop/protocol';
-import { Files, MessageSquareText, ShieldAlert, Smartphone, Sparkles } from 'lucide-react';
+import { Files, MessageSquareText, Zap, ShieldAlert, Smartphone, Sparkles } from 'lucide-react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'files' | 'text'>('files');
+  const [activeTab, setActiveTab] = useState<'files' | 'text' | 'clipboard'>('files');
+  const [autoSyncClipboard, setAutoSyncClipboard] = useState(true);
   const [viewMode, setViewMode] = useState<'landing' | 'app'>('app');
   const [selectedPeer, setSelectedPeer] = useState<DeviceInfo | null>(null);
   const [roomId, setRoomId] = useState<string>('localdrop-lan');
@@ -74,6 +77,11 @@ export default function Home() {
       if (storedSound !== null) {
         setSoundEnabled(storedSound === 'true');
       }
+
+      const storedAutoClip = localStorage.getItem('localdrop_auto_clipboard');
+      if (storedAutoClip !== null) {
+        setAutoSyncClipboard(storedAutoClip === 'true');
+      }
     }
   }, []);
 
@@ -102,6 +110,8 @@ export default function Home() {
     currentTransfer,
     incomingTransfer,
     textMessages,
+    clipboardItems,
+    incomingClipboardPill,
     history,
     diagnostics,
     connectToPeer,
@@ -110,6 +120,10 @@ export default function Home() {
     rejectIncomingTransfer,
     cancelTransfer,
     sendText,
+    sendClipboard,
+    dismissClipboardPill,
+    deleteClipboardItem,
+    clearClipboardHistory,
     clearCurrentTransfer,
   } = useWebRTC(device, sendSignal, setSignalHandler);
 
@@ -119,6 +133,43 @@ export default function Home() {
       soundEffects.playConnect();
     }
   }, [connectedPeerIds.length, soundEnabled]);
+
+  // Play sound when incoming clipboard pill arrives
+  useEffect(() => {
+    if (incomingClipboardPill && soundEnabled) {
+      soundEffects.playNotification();
+    }
+  }, [incomingClipboardPill, soundEnabled]);
+
+  // Global paste listener for instant cross-device broadcast
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const text = e.clipboardData?.getData('text/plain');
+      if (text && text.trim() && connectedPeerIds.length > 0 && autoSyncClipboard) {
+        const ok = sendClipboard(selectedPeer ? selectedPeer.deviceId : 'all', text);
+        if (ok) {
+          addToast(
+            'success',
+            'Clipboard Broadcasted',
+            `Sent to ${selectedPeer ? selectedPeer.deviceName : 'all connected devices'}`
+          );
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [connectedPeerIds.length, autoSyncClipboard, selectedPeer, sendClipboard, addToast]);
 
   // Play sound when transfer finishes
   useEffect(() => {
@@ -168,6 +219,16 @@ export default function Home() {
       {/* Floating Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
+      {/* Floating Apple-Style Live Clipboard Pill */}
+      <LiveClipboardPill
+        item={incomingClipboardPill}
+        onDismiss={dismissClipboardPill}
+        onCopied={() => {
+          if (soundEnabled) soundEffects.playComplete();
+          addToast('success', 'Copied to Clipboard', incomingClipboardPill?.content.slice(0, 45));
+        }}
+      />
+
       {/* Top Navbar */}
       <Navbar
         device={device}
@@ -179,6 +240,11 @@ export default function Home() {
         onOpenQR={() => setIsQrOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
+        onLogoClick={() => {
+          setViewMode('landing');
+          localStorage.setItem('localdrop_last_view', 'landing');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
 
       {/* Landing or App View */}
@@ -195,11 +261,11 @@ export default function Home() {
         <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 animate-fade-in">
           {/* Sub-header navigation & Mode Switch */}
           <div className="flex items-center justify-between">
-            {/* Files / Text tab switcher */}
-            <div className="inline-flex p-1 rounded-2xl bg-muted/80 border border-border">
+            {/* Files / Text / Clipboard tab switcher */}
+            <div className="inline-flex p-1 rounded-2xl bg-muted/80 border border-white/[0.08]">
               <button
                 onClick={() => setActiveTab('files')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                   activeTab === 'files'
                     ? 'bg-card text-foreground shadow-sm shadow-black/10'
                     : 'text-muted-foreground hover:text-foreground'
@@ -210,7 +276,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setActiveTab('text')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                   activeTab === 'text'
                     ? 'bg-card text-foreground shadow-sm shadow-black/10'
                     : 'text-muted-foreground hover:text-foreground'
@@ -218,6 +284,20 @@ export default function Home() {
               >
                 <MessageSquareText className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Text</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('clipboard')}
+                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all relative ${
+                  activeTab === 'clipboard'
+                    ? 'bg-card text-foreground shadow-sm shadow-black/10'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span>Clipboard</span>
+                {connectedPeerIds.length > 0 && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                )}
               </button>
             </div>
 
@@ -252,19 +332,35 @@ export default function Home() {
             onOpenQR={() => setIsQrOpen(true)}
           />
 
-          {/* Transfer Area (Files or Text) */}
+          {/* Transfer Area (Files, Text, or Clipboard) */}
           {activeTab === 'files' ? (
             <DropZone
               selectedPeer={selectedPeer}
               onSendFiles={handleSendFiles}
               disabled={!selectedPeer}
             />
-          ) : (
+          ) : activeTab === 'text' ? (
             <TextShare
               selectedPeer={selectedPeer}
               textMessages={textMessages}
               onSendText={handleSendText}
               disabled={!selectedPeer}
+            />
+          ) : (
+            <ClipboardManager
+              selectedPeer={selectedPeer}
+              connectedPeerCount={connectedPeerIds.length}
+              clipboardItems={clipboardItems}
+              onSendClipboard={sendClipboard}
+              onDeleteClipboardItem={deleteClipboardItem}
+              onClearHistory={clearClipboardHistory}
+              autoSyncEnabled={autoSyncClipboard}
+              onToggleAutoSync={(val) => {
+                setAutoSyncClipboard(val);
+                try {
+                  localStorage.setItem('localdrop_auto_clipboard', String(val));
+                } catch (e) {}
+              }}
             />
           )}
 
