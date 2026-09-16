@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Laptop, Palette, Check, ExternalLink } from 'lucide-react';
+import { X, Laptop, Palette, Check, ExternalLink, Volume2, VolumeX } from 'lucide-react';
 import { DeviceInfo } from '@localdrop/protocol';
 
 interface SettingsModalProps {
@@ -11,6 +11,8 @@ interface SettingsModalProps {
   onSaveDeviceName: (name: string) => void;
   theme: 'dark' | 'light';
   onToggleTheme: (theme: 'dark' | 'light') => void;
+  soundEnabled?: boolean;
+  onToggleSound?: () => void;
   devMode?: boolean;
   onToggleDevMode?: (enabled: boolean) => void;
 }
@@ -22,6 +24,8 @@ export function SettingsModal({
   onSaveDeviceName,
   theme,
   onToggleTheme,
+  soundEnabled = true,
+  onToggleSound,
 }: SettingsModalProps) {
   const [nameInput, setNameInput] = useState(device.deviceName);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -107,6 +111,36 @@ export function SettingsModal({
             </button>
           </div>
         </div>
+
+        {/* Sound Effects Setting */}
+        {onToggleSound && (
+          <div className="pt-3 border-t border-border flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                {soundEnabled ? (
+                  <Volume2 className="w-3.5 h-3.5 text-blue-400" />
+                ) : (
+                  <VolumeX className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+                Sound Alerts
+              </label>
+              <p className="text-[11px] text-muted-foreground">
+                Audio cues for transfer completions and incoming pairing requests.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onToggleSound}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 ${
+                soundEnabled
+                  ? 'bg-blue-500/15 border-blue-500/30 text-blue-400'
+                  : 'bg-muted border-border text-muted-foreground'
+              }`}
+            >
+              {soundEnabled ? 'Enabled' : 'Muted'}
+            </button>
+          </div>
+        )}
 
         {/* Source Code Info */}
         <div className="pt-3 border-t border-border/80 flex flex-col gap-2.5 text-xs">

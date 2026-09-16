@@ -69,32 +69,32 @@ export function DeviceList({
 
       {peers.length === 0 ? (
         /* AirDrop Radar Empty State */
-        <div className="relative overflow-hidden p-8 sm:p-12 rounded-3xl border border-border bg-card/40 text-center space-y-4">
-          <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
+        <div className="relative overflow-hidden p-5 sm:p-10 rounded-2xl sm:rounded-3xl border border-border bg-card/40 text-center space-y-3 sm:space-y-4">
+          <div className="relative w-20 h-20 sm:w-28 sm:h-28 mx-auto flex items-center justify-center">
             {/* Concentric radar rings */}
             <div className="absolute inset-0 rounded-full border border-blue-500/20 radar-wave-1" />
             <div className="absolute inset-2 rounded-full border border-blue-500/15 radar-wave-2" />
             <div className="absolute inset-4 rounded-full border border-blue-500/10 radar-wave-3" />
 
             {/* Center icon */}
-            <div className="relative z-10 w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <Radio className="w-6 h-6 animate-pulse" />
+            <div className="relative z-10 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <Radio className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
             </div>
           </div>
 
-          <div className="space-y-1.5 max-w-sm mx-auto">
+          <div className="space-y-1 sm:space-y-1.5 max-w-sm mx-auto">
             <h3 className="text-sm font-bold text-foreground">
               Scanning for nearby devices...
             </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Open LocalDrop on another device on this Wi-Fi network, or scan the pairing QR code to connect immediately.
+            <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+              Open LocalDrop on another device on this Wi-Fi network, or scan QR code to connect immediately.
             </p>
           </div>
 
-          <div className="pt-1">
+          <div className="pt-0.5 sm:pt-1">
             <button
               onClick={onOpenQR}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-muted hover:bg-muted/80 text-foreground transition-all border border-border active:scale-95 shadow-sm"
+              className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold bg-muted hover:bg-muted/80 text-foreground transition-all border border-border active:scale-95 shadow-sm"
             >
               <QrCode className="w-4 h-4 text-blue-400" />
               <span>Show Pairing QR Code</span>

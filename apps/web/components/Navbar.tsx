@@ -63,7 +63,7 @@ export function Navbar({
         {/* Brand / Logo */}
         <div
           onClick={onLogoClick}
-          className="flex items-center gap-2.5 cursor-pointer select-none group shrink-0"
+          className="flex items-center gap-2 sm:gap-2.5 cursor-pointer select-none group shrink-0"
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
@@ -77,22 +77,22 @@ export function Navbar({
             <Image
               src="/favicon.png"
               alt="LocalDrop Logo"
-              width={36}
-              height={36}
-              className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-[0_2px_8px_rgba(37,99,235,0.4)] group-hover:drop-shadow-[0_4px_14px_rgba(37,99,235,0.65)] group-hover:scale-105 transition-all duration-200"
+              width={34}
+              height={34}
+              className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-[0_2px_8px_rgba(37,99,235,0.4)] group-hover:drop-shadow-[0_4px_14px_rgba(37,99,235,0.65)] group-hover:scale-105 transition-all duration-200"
               priority
             />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-[17px] sm:text-[19px] tracking-tight text-foreground group-hover:opacity-95 transition-opacity">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="font-extrabold text-[16px] sm:text-[19px] tracking-tight text-foreground group-hover:opacity-95 transition-opacity">
               Local<span className="text-blue-600 dark:text-blue-400 group-hover:text-blue-500 dark:group-hover:text-blue-300 transition-colors">Drop</span>
             </span>
-            <span className="text-[9px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 leading-none">
+            <span className="hidden xs:inline-flex text-[9px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 leading-none">
               P2P
             </span>
             {/* Mobile status indicator dot */}
             <span
-              className={`md:hidden w-2 h-2 rounded-full ${
+              className={`md:hidden w-2 h-2 rounded-full shrink-0 ${
                 status === 'connected'
                   ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]'
                   : status === 'connecting'
@@ -156,25 +156,25 @@ export function Navbar({
         </div>
 
         {/* Right: Actions & Micro-Toolbar */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Pair Device Button */}
           <button
             onClick={onOpenQR}
             aria-label="Scan QR Code to Pair"
-            className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transition-all shadow-md shadow-blue-500/25 active:scale-95 min-h-[38px] cursor-pointer"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transition-all shadow-md shadow-blue-500/25 active:scale-95 min-h-[36px] sm:min-h-[38px] cursor-pointer"
           >
             <QrCode className="w-4 h-4 shrink-0" />
-            <span>Pair<span className="hidden sm:inline"> Device</span></span>
+            <span>Pair<span className="hidden xs:inline"> Device</span></span>
           </button>
 
           {/* Segmented Utility Toolbar */}
-          <div className="flex items-center gap-0.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.07] backdrop-blur-md">
-            {/* Sound Toggle */}
+          <div className="flex items-center gap-0.5 p-0.5 sm:p-1 rounded-xl bg-white/[0.04] border border-white/[0.07] backdrop-blur-md">
+            {/* Sound Toggle - visible on tablet/desktop */}
             <button
               onClick={onToggleSound}
               aria-label="Toggle Sound Effects"
               title={soundEnabled ? 'Sound Effects Enabled' : 'Sound Effects Muted'}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors active:scale-90"
+              className="hidden sm:flex w-8 h-8 rounded-lg items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors active:scale-90"
             >
               {soundEnabled ? <Volume2 className="w-4 h-4 text-blue-400" /> : <VolumeX className="w-4 h-4" />}
             </button>
@@ -203,14 +203,14 @@ export function Navbar({
               <Settings className="w-4 h-4 group-hover:rotate-45 transition-transform duration-300" />
             </button>
 
-            {/* GitHub Repo */}
+            {/* GitHub Repo - visible on tablet/desktop */}
             <a
               href="https://github.com/Cathhdyy/LocalDrop"
               target="_blank"
               rel="noopener noreferrer"
               title="Star LocalDrop on GitHub"
               aria-label="GitHub Repository"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors active:scale-90"
+              className="hidden sm:flex w-8 h-8 rounded-lg items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors active:scale-90"
             >
               <Github className="w-4 h-4" />
             </a>

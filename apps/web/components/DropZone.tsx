@@ -127,7 +127,7 @@ export function DropZone({ selectedPeer, onSendFiles, disabled }: DropZoneProps)
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         onClick={() => !disabled && fileInputRef.current?.click()}
-        className={`relative overflow-hidden flex flex-col items-center justify-center p-8 sm:p-14 rounded-3xl border-2 border-dashed transition-all cursor-pointer select-none ${
+        className={`relative overflow-hidden flex flex-col items-center justify-center p-6 sm:p-14 rounded-2xl sm:rounded-3xl border-2 border-dashed transition-all cursor-pointer select-none ${
           isDragOver
             ? 'border-blue-500 bg-blue-500/[0.08] scale-[1.01] shadow-2xl shadow-blue-500/10'
             : 'border-border bg-card/60 hover:border-blue-500/50 hover:bg-muted/40'
@@ -173,29 +173,30 @@ export function DropZone({ selectedPeer, onSendFiles, disabled }: DropZoneProps)
         {/* Ambient glow in center of drop zone */}
         <div className="absolute w-40 h-40 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600/20 to-indigo-600/20 border border-blue-500/30 flex items-center justify-center mb-4 text-blue-400 shadow-inner group-hover:scale-105 transition-transform">
-          <UploadCloud className="w-8 h-8 stroke-[1.75]" />
+        <div className="relative z-10 w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-blue-600/20 to-indigo-600/20 border border-blue-500/30 flex items-center justify-center mb-3 sm:mb-4 text-blue-400 shadow-inner group-hover:scale-105 transition-transform">
+          <UploadCloud className="w-6 h-6 sm:w-8 sm:h-8 stroke-[1.75]" />
         </div>
 
-        <div className="relative z-10 text-center space-y-1.5 px-4">
-          <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
-            Drop files here to send
+        <div className="relative z-10 text-center space-y-1 sm:space-y-1.5 px-4">
+          <h3 className="text-sm sm:text-lg font-bold text-foreground tracking-tight">
+            <span className="hidden sm:inline">Drop files here to send</span>
+            <span className="sm:hidden">Tap to choose files to send</span>
           </h3>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            or <span className="text-blue-400 font-semibold underline underline-offset-2">browse files</span> from your device
+            or <span className="text-blue-400 font-semibold underline underline-offset-2">browse photos & files</span>
           </p>
         </div>
 
         {/* File Type Badges */}
-        <div className="relative z-10 flex flex-wrap items-center justify-center gap-2 sm:gap-4 mt-6 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 border border-border/60">
-            <ImageIcon className="w-3.5 h-3.5 text-purple-400" /> Photos
+        <div className="relative z-10 flex flex-wrap items-center justify-center gap-1.5 sm:gap-4 mt-4 sm:mt-6 text-[11px] sm:text-xs text-muted-foreground">
+          <span className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-muted/60 border border-border/60">
+            <ImageIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400" /> Photos
           </span>
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 border border-border/60">
-            <Video className="w-3.5 h-3.5 text-blue-400" /> 4K Videos
+          <span className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-muted/60 border border-border/60">
+            <Video className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-400" /> 4K Videos
           </span>
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 border border-border/60">
-            <FileArchive className="w-3.5 h-3.5 text-amber-400" /> Archives
+          <span className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-muted/60 border border-border/60">
+            <FileArchive className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" /> Archives
           </span>
           <button
             type="button"
@@ -203,9 +204,9 @@ export function DropZone({ selectedPeer, onSendFiles, disabled }: DropZoneProps)
               e.stopPropagation();
               folderInputRef.current?.click();
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 hover:bg-muted border border-border/60 text-foreground hover:text-blue-400 transition-colors"
+            className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-muted/60 hover:bg-muted border border-border/60 text-foreground hover:text-blue-400 transition-colors"
           >
-            <Folder className="w-3.5 h-3.5 text-emerald-400" /> Folder
+            <Folder className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" /> Folder
           </button>
         </div>
       </div>

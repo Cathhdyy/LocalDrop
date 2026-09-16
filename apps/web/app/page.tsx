@@ -258,57 +258,61 @@ export default function Home() {
           />
         </main>
       ) : (
-        <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 animate-fade-in">
+        <main className="flex-1 max-w-4xl w-full mx-auto px-3.5 sm:px-6 pt-3 sm:pt-6 pb-32 sm:pb-16 space-y-4 sm:space-y-6 animate-fade-in">
           {/* Sub-header navigation & Mode Switch */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Files / Text / Clipboard tab switcher */}
-            <div className="inline-flex p-1 rounded-2xl bg-muted/80 border border-white/[0.08]">
+            <div className="flex-1 sm:flex-initial inline-flex p-1 rounded-2xl bg-muted/80 border border-white/[0.08] shadow-sm">
               <button
                 onClick={() => setActiveTab('files')}
-                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                   activeTab === 'files'
                     ? 'bg-card text-foreground shadow-sm shadow-black/10'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <Files className="w-3.5 h-3.5 text-blue-400" />
+                <Files className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                 <span>Files</span>
               </button>
               <button
                 onClick={() => setActiveTab('text')}
-                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                   activeTab === 'text'
                     ? 'bg-card text-foreground shadow-sm shadow-black/10'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <MessageSquareText className="w-3.5 h-3.5 text-indigo-400" />
+                <MessageSquareText className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                 <span>Text</span>
               </button>
               <button
                 onClick={() => setActiveTab('clipboard')}
-                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all relative ${
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all relative ${
                   activeTab === 'clipboard'
                     ? 'bg-card text-foreground shadow-sm shadow-black/10'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span>Clipboard</span>
                 {connectedPeerIds.length > 0 && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                 )}
               </button>
             </div>
 
+            {/* About Page Toggle Button */}
             <button
               onClick={() => {
                 setViewMode('landing');
                 localStorage.setItem('localdrop_last_view', 'landing');
               }}
-              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-muted"
+              title="Learn more about LocalDrop"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted border border-white/[0.06] transition-all shrink-0 active:scale-95 whitespace-nowrap"
             >
-              About LocalDrop
+              <Sparkles className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <span className="hidden sm:inline">About LocalDrop</span>
+              <span className="sm:hidden">About</span>
             </button>
           </div>
 
@@ -440,6 +444,8 @@ export default function Home() {
         }}
         theme={theme}
         onToggleTheme={toggleTheme}
+        soundEnabled={soundEnabled}
+        onToggleSound={toggleSound}
         devMode={devMode}
         onToggleDevMode={toggleDevMode}
       />
