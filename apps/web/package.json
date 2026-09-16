@@ -12,6 +12,7 @@
   "dependencies": {
     "@localdrop/p2p": "*",
     "@localdrop/protocol": "*",
+    "framer-motion": "^13.3.0",
     "lucide-react": "^0.378.0",
     "next": "^14.2.3",
     "qrcode.react": "^3.1.0",
