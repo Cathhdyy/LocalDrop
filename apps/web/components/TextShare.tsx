@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Send, Copy, Check, Terminal, Globe, FileText, ClipboardPaste } from 'lucide-react';
+import { Send, Copy, Check, Terminal, Globe, FileText, ClipboardPaste, Share2 } from 'lucide-react';
 import { DeviceInfo, SharedTextMessage } from '@localdrop/protocol';
 
 interface TextShareProps {
@@ -31,6 +31,21 @@ export function TextShare({
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const shareViaSystem = async (text: string) => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Shared via LocalDrop',
+          text,
+        });
+      } catch (err) {
+        // Ignored if user dismissed share dialog
+      }
+    } else {
+      navigator.clipboard.writeText(text);
+    }
   };
 
   const handlePasteClipboard = async () => {
@@ -142,20 +157,29 @@ export function TextShare({
                     {msg.text}
                   </div>
 
-                  <div className="flex justify-end">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => shareViaSystem(msg.text)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors border border-border min-h-[36px] active:scale-95"
+                      title="Share text"
+                    >
+                      <Share2 className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Share</span>
+                    </button>
+
                     <button
                       onClick={() => copyToClipboard(msg.text, msg.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors border border-border"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors border border-border min-h-[36px] active:scale-95"
                     >
                       {isCopied ? (
                         <>
                           <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          <span className="text-emerald-400">Copied to clipboard</span>
+                          <span className="text-emerald-400">Copied</span>
                         </>
                       ) : (
                         <>
                           <Copy className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span>Copy text</span>
+                          <span>Copy</span>
                         </>
                       )}
                     </button>

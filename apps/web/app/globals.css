@@ -125,3 +125,26 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(140, 140, 160, 0.45);
 }
+
+/* Mobile & Touch Optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, input, textarea {
+  touch-action: manipulation;
+}
+
+.tap-target {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* iOS safe-area support */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  footer {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+}
+

@@ -5,6 +5,7 @@ import {
   UploadCloud,
   File,
   Image as ImageIcon,
+  Camera,
   Video,
   Folder,
   X,
@@ -34,6 +35,8 @@ export function DropZone({ selectedPeer, onSendFiles, disabled }: DropZoneProps)
   const [selectedFiles, setSelectedFiles] = useState<FileItemWithPreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
@@ -148,6 +151,24 @@ export function DropZone({ selectedPeer, onSendFiles, disabled }: DropZoneProps)
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
           disabled={disabled}
         />
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          className="hidden"
+          onChange={(e) => e.target.files && handleFiles(e.target.files)}
+          disabled={disabled}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*,video/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => e.target.files && handleFiles(e.target.files)}
+          disabled={disabled}
+        />
 
         {/* Ambient glow in center of drop zone */}
         <div className="absolute w-40 h-40 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
@@ -156,7 +177,7 @@ export function DropZone({ selectedPeer, onSendFiles, disabled }: DropZoneProps)
           <UploadCloud className="w-8 h-8 stroke-[1.75]" />
         </div>
 
-        <div className="relative z-10 text-center space-y-1.5">
+        <div className="relative z-10 text-center space-y-1.5 px-4">
           <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
             Drop files here to send
           </h3>
@@ -166,7 +187,7 @@ export function DropZone({ selectedPeer, onSendFiles, disabled }: DropZoneProps)
         </div>
 
         {/* File Type Badges */}
-        <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-6 text-xs text-muted-foreground">
+        <div className="relative z-10 flex flex-wrap items-center justify-center gap-2 sm:gap-4 mt-6 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 border border-border/60">
             <ImageIcon className="w-3.5 h-3.5 text-purple-400" /> Photos
           </span>
@@ -187,6 +208,49 @@ export function DropZone({ selectedPeer, onSendFiles, disabled }: DropZoneProps)
             <Folder className="w-3.5 h-3.5 text-emerald-400" /> Folder
           </button>
         </div>
+      </div>
+
+      {/* Quick Action Touch Bar (Mobile Friendly) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <button
+          type="button"
+          onClick={() => cameraInputRef.current?.click()}
+          disabled={disabled}
+          className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-card border border-border hover:border-blue-500/40 hover:bg-muted/50 text-xs font-semibold text-foreground transition-all shadow-sm active:scale-95 disabled:opacity-50 min-h-[44px]"
+        >
+          <Camera className="w-4 h-4 text-purple-400 shrink-0" />
+          <span>Camera</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => photoInputRef.current?.click()}
+          disabled={disabled}
+          className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-card border border-border hover:border-blue-500/40 hover:bg-muted/50 text-xs font-semibold text-foreground transition-all shadow-sm active:scale-95 disabled:opacity-50 min-h-[44px]"
+        >
+          <ImageIcon className="w-4 h-4 text-pink-400 shrink-0" />
+          <span>Photos</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled}
+          className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-card border border-border hover:border-blue-500/40 hover:bg-muted/50 text-xs font-semibold text-foreground transition-all shadow-sm active:scale-95 disabled:opacity-50 min-h-[44px]"
+        >
+          <File className="w-4 h-4 text-blue-400 shrink-0" />
+          <span>Files</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => folderInputRef.current?.click()}
+          disabled={disabled}
+          className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-card border border-border hover:border-blue-500/40 hover:bg-muted/50 text-xs font-semibold text-foreground transition-all shadow-sm active:scale-95 disabled:opacity-50 min-h-[44px]"
+        >
+          <Folder className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>Folders</span>
+        </button>
       </div>
 
       {/* Selected Files Preview List */}

@@ -92,10 +92,21 @@ export function Navbar({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-lg tracking-tight text-foreground">LocalDrop</span>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight text-foreground">LocalDrop</span>
               <span className="text-[10px] uppercase font-mono font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
                 P2P
               </span>
+              {/* Mobile status indicator */}
+              <span
+                className={`md:hidden w-2 h-2 rounded-full ${
+                  status === 'connected'
+                    ? 'bg-emerald-400 animate-pulse'
+                    : status === 'connecting'
+                    ? 'bg-amber-400 animate-ping'
+                    : 'bg-rose-500'
+                }`}
+                title={`Status: ${status}`}
+              />
             </div>
           </div>
         </div>
@@ -121,15 +132,15 @@ export function Navbar({
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Pair QR CTA */}
           <button
             onClick={onOpenQR}
             aria-label="Scan QR Code to Pair"
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md shadow-blue-500/20 active:scale-95"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md shadow-blue-500/20 active:scale-95 min-h-[38px]"
           >
-            <QrCode className="w-4 h-4" />
-            <span>Pair Device</span>
+            <QrCode className="w-4 h-4 shrink-0" />
+            <span>Pair<span className="hidden sm:inline"> Device</span></span>
           </button>
 
           {/* Sound Toggle */}

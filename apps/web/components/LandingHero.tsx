@@ -66,7 +66,7 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
           </button>
 
           <a
-            href="https://github.com/localdrop/localdrop"
+            href="https://github.com/Cathhdyy/LocalDrop"
             target="_blank"
             rel="noreferrer"
             className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-semibold text-sm bg-muted hover:bg-muted/80 text-foreground border border-border flex items-center justify-center gap-2 transition-all"

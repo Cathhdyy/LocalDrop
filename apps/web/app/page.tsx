@@ -12,6 +12,8 @@ import { PrivacyModal } from '../components/PrivacyBadge';
 import { SettingsModal } from '../components/SettingsModal';
 import { DevModePanel } from '../components/DevModePanel';
 import { LandingHero } from '../components/LandingHero';
+import { Footer } from '../components/Footer';
+import { LegalModal, LegalTab } from '../components/LegalModal';
 import { ToastContainer, ToastMessage } from '../components/Toast';
 import { useDevice } from '../hooks/useDevice';
 import { useSignaling } from '../hooks/useSignaling';
@@ -32,6 +34,13 @@ export default function Home() {
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [isLegalOpen, setIsLegalOpen] = useState(false);
+  const [legalTab, setLegalTab] = useState<LegalTab>('privacy');
+
+  const handleOpenLegal = (tab: LegalTab) => {
+    setLegalTab(tab);
+    setIsLegalOpen(true);
+  };
 
   const { device, devMode, theme, updateDeviceName, toggleDevMode, toggleTheme } = useDevice();
 
@@ -337,6 +346,23 @@ export default function Home() {
         onToggleTheme={toggleTheme}
         devMode={devMode}
         onToggleDevMode={toggleDevMode}
+      />
+
+      {/* Universal Responsive Footer */}
+      <Footer
+        onOpenAbout={() => {
+          setViewMode('landing');
+          localStorage.setItem('localdrop_last_view', 'landing');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onOpenLegal={handleOpenLegal}
+      />
+
+      {/* Legal & Compliance Modal */}
+      <LegalModal
+        isOpen={isLegalOpen}
+        initialTab={legalTab}
+        onClose={() => setIsLegalOpen(false)}
       />
     </div>
   );
