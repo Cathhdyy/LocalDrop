@@ -107,6 +107,7 @@ export default function Home() {
   // 2. WebRTC P2P hook
   const {
     connectedPeerIds,
+    isPeerConnected,
     currentTransfer,
     incomingTransfer,
     textMessages,
@@ -196,7 +197,7 @@ export default function Home() {
 
   // Handle connecting to peer with explicit pairing approval
   const handleConnectPeer = async (peerId: string) => {
-    if (connectedPeerIds.includes(peerId)) {
+    if (isPeerConnected(peerId) || connectedPeerIds.includes(peerId)) {
       return;
     }
     const target = peers.find((p) => p.deviceId === peerId);
@@ -206,9 +207,14 @@ export default function Home() {
     try {
       const accepted = await requestPairing(peerId);
       if (accepted) {
-        await connectToPeer(peerId);
-        if (soundEnabled) soundEffects.playConnect();
-        addToast('success', 'Pairing Approved', `Connected to ${targetName}`);
+        addToast('info', 'Connecting...', `Establishing direct link with ${targetName}...`);
+        const connected = await connectToPeer(peerId, 12000);
+        if (connected) {
+          if (soundEnabled) soundEffects.playConnect();
+          addToast('success', 'Connected', `Paired with ${targetName}`);
+        } else {
+          addToast('error', 'Connection Failed', `Could not establish P2P connection to ${targetName}.`);
+        }
       } else {
         addToast('error', 'Pairing Declined', `${targetName} declined or request timed out.`);
       }
@@ -218,22 +224,23 @@ export default function Home() {
   };
 
   const ensureConnected = async (peerId: string, peerName: string): Promise<boolean> => {
-    if (connectedPeerIds.includes(peerId)) {
+    if (isPeerConnected(peerId) || connectedPeerIds.includes(peerId)) {
       return true;
     }
     addToast('info', 'Connecting first...', `Pairing with ${peerName} before transfer`);
     try {
       const accepted = await requestPairing(peerId);
       if (accepted) {
-        await connectToPeer(peerId);
-        if (soundEnabled) soundEffects.playConnect();
-        addToast('success', 'Connected', `Paired with ${peerName}`);
-        let attempts = 30;
-        while (attempts > 0) {
-          await new Promise((r) => setTimeout(r, 100));
-          attempts--;
+        addToast('info', 'Connecting...', `Establishing direct link with ${peerName}...`);
+        const connected = await connectToPeer(peerId, 12000);
+        if (connected) {
+          if (soundEnabled) soundEffects.playConnect();
+          addToast('success', 'Connected', `Paired with ${peerName}`);
+          return true;
+        } else {
+          addToast('error', 'Connection Failed', `P2P connection with ${peerName} timed out. Check network.`);
+          return false;
         }
-        return true;
       } else {
         addToast('error', 'Pairing Declined', `${peerName} declined the connection request.`);
         return false;
@@ -463,12 +470,10 @@ export default function Home() {
               <button
                 onClick={() => {
                   respondPairing(incomingPairingRequest.senderPeerId, true);
-                  connectToPeer(incomingPairingRequest.senderPeerId);
-                  if (soundEnabled) soundEffects.playConnect();
                   addToast(
-                    'success',
-                    'Connected',
-                    `Paired with ${incomingPairingRequest.device.deviceName}`
+                    'info',
+                    'Pairing Accepted',
+                    `Connecting with ${incomingPairingRequest.device.deviceName}...`
                   );
                 }}
                 className="py-3 px-4 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25 transition-all"

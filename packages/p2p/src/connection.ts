@@ -19,6 +19,7 @@ export interface PeerConnectionCallbacks {
 export class P2PPeer {
   public readonly peerId: string;
   public readonly isInitiator: boolean;
+  public readonly isPolite: boolean;
   private pc: RTCPeerConnection;
   private dataChannel: RTCDataChannel | null = null;
   private callbacks: PeerConnectionCallbacks;
@@ -29,10 +30,17 @@ export class P2PPeer {
   private pendingIceCandidates: any[] = [];
   private logs: Array<{ timestamp: number; level: 'info' | 'warn' | 'error'; message: string }> = [];
 
-  constructor(peerId: string, isInitiator: boolean, callbacks: PeerConnectionCallbacks) {
+  constructor(
+    peerId: string,
+    isInitiator: boolean,
+    callbacks: PeerConnectionCallbacks,
+    localPeerId?: string
+  ) {
     this.peerId = peerId;
     this.isInitiator = isInitiator;
     this.callbacks = callbacks;
+    // Deterministic polite peer resolution: if IDs are known, higher ID yields (polite)
+    this.isPolite = localPeerId ? localPeerId > peerId : !isInitiator;
 
     this.pc = new RTCPeerConnection({
       iceServers: DEFAULT_ICE_SERVERS,
@@ -40,13 +48,14 @@ export class P2PPeer {
 
     this.setupPeerConnection();
 
+    // Always listen for incoming data channels (essential during glare rollback)
+    this.pc.ondatachannel = (event) => {
+      this.log('info', 'Incoming RTCDataChannel received');
+      this.setupDataChannel(event.channel);
+    };
+
     if (this.isInitiator) {
       this.setupDataChannel(this.pc.createDataChannel('localdrop-transfer', { ordered: true }));
-    } else {
-      this.pc.ondatachannel = (event) => {
-        this.log('info', 'Incoming RTCDataChannel received');
-        this.setupDataChannel(event.channel);
-      };
     }
 
     this.startStatsMonitor();
@@ -113,8 +122,14 @@ export class P2PPeer {
 
   public async startOffer(): Promise<void> {
     if (!this.isInitiator) return;
+    if (this.pc.signalingState === 'closed') return;
+    if (this.pc.signalingState !== 'stable') {
+      this.log('warn', `Cannot start offer in signaling state: ${this.pc.signalingState}`);
+      return;
+    }
     try {
       const offer = await this.pc.createOffer();
+      if (this.pc.signalingState !== 'stable') return;
       await this.pc.setLocalDescription(offer);
       this.log('info', 'Created and set local offer description');
       this.callbacks.onSignal({
@@ -128,8 +143,19 @@ export class P2PPeer {
   }
 
   public async handleSignal(signal: RTCSignalPayload): Promise<void> {
+    if (this.pc.signalingState === 'closed') return;
     try {
       if (signal.type === 'offer') {
+        const offerCollision = this.pc.signalingState !== 'stable';
+        if (offerCollision) {
+          if (!this.isPolite) {
+            this.log('warn', 'Offer collision detected: impolite peer ignoring incoming offer');
+            return;
+          }
+          this.log('info', 'Offer collision detected: polite peer rolling back local offer');
+          await this.pc.setLocalDescription({ type: 'rollback' });
+        }
+
         await this.pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: signal.sdp }));
         await this.drainPendingCandidates();
         const answer = await this.pc.createAnswer();
@@ -140,15 +166,23 @@ export class P2PPeer {
           sdp: answer.sdp || '',
         });
       } else if (signal.type === 'answer') {
+        if (this.pc.signalingState !== 'have-local-offer') {
+          this.log('warn', `Ignoring remote answer received in signaling state: ${this.pc.signalingState}`);
+          return;
+        }
         await this.pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.sdp }));
         await this.drainPendingCandidates();
         this.log('info', 'Handled remote answer');
       } else if (signal.type === 'candidate' && signal.candidate) {
-        if (!this.pc.remoteDescription) {
+        if (!this.pc.remoteDescription || !this.pc.remoteDescription.type) {
           this.log('info', 'Remote description not set yet; queueing ICE candidate');
           this.pendingIceCandidates.push(signal.candidate);
         } else {
-          await this.pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+          try {
+            await this.pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+          } catch (e: any) {
+            this.log('warn', `Failed to add ICE candidate: ${e?.message || e}`);
+          }
         }
       }
     } catch (err: any) {

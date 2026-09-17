@@ -211,44 +211,49 @@ export function useWebRTC(
         }
       };
 
-      const peer = new P2PPeer(targetPeerId, isInitiator, {
-        onSignal: (sig) => {
-          sendSignal(targetPeerId, sig);
-        },
-        onDataChannelOpen: () => {
-          setConnectedPeerIds((prev) => Array.from(new Set([...prev, targetPeerId])));
-          // Exchange device info
-          peer.sendControlMessage({
-            type: 'device-info',
-            deviceId: device.deviceId,
-            deviceName: device.deviceName,
-            platform: device.platform,
-            timestamp: Date.now(),
-          });
-        },
-        onDataChannelClose: () => {
-          handlePeerDisconnect();
-        },
-        onConnectionStateChange: (state) => {
-          if (state === 'failed' || state === 'closed' || state === 'disconnected') {
+      const peer = new P2PPeer(
+        targetPeerId,
+        isInitiator,
+        {
+          onSignal: (sig) => {
+            sendSignal(targetPeerId, sig);
+          },
+          onDataChannelOpen: () => {
+            setConnectedPeerIds((prev) => Array.from(new Set([...prev, targetPeerId])));
+            // Exchange device info
+            peer.sendControlMessage({
+              type: 'device-info',
+              deviceId: device.deviceId,
+              deviceName: device.deviceName,
+              platform: device.platform,
+              timestamp: Date.now(),
+            });
+          },
+          onDataChannelClose: () => {
             handlePeerDisconnect();
-          }
+          },
+          onConnectionStateChange: (state) => {
+            if (state === 'failed' || state === 'closed' || state === 'disconnected') {
+              handlePeerDisconnect();
+            }
+          },
+          onMessage: (msg: DataChannelMessage) => {
+            handleDataChannelMessageRef.current?.(targetPeerId, msg);
+          },
+          onBinaryChunk: (buffer: ArrayBuffer) => {
+            if (activeReceiverRef.current) {
+              activeReceiverRef.current.handleChunk(buffer);
+            }
+          },
+          onDiagnosticsUpdate: (diag) => {
+            setDiagnostics(diag);
+          },
+          onError: (err) => {
+            console.error(`Peer ${targetPeerId} error:`, err);
+          },
         },
-        onMessage: (msg: DataChannelMessage) => {
-          handleDataChannelMessageRef.current?.(targetPeerId, msg);
-        },
-        onBinaryChunk: (buffer: ArrayBuffer) => {
-          if (activeReceiverRef.current) {
-            activeReceiverRef.current.handleChunk(buffer);
-          }
-        },
-        onDiagnosticsUpdate: (diag) => {
-          setDiagnostics(diag);
-        },
-        onError: (err) => {
-          console.error(`Peer ${targetPeerId} error:`, err);
-        },
-      });
+        device.deviceId
+      );
 
       peersRef.current.set(targetPeerId, peer);
       setActivePeers(new Map(peersRef.current));
@@ -257,11 +262,34 @@ export function useWebRTC(
     [device, sendSignal, updateCurrentTransfer]
   );
 
-  // Connect to target peer
+  // Check if a peer has an open RTCDataChannel
+  const isPeerConnected = useCallback(
+    (targetPeerId: string): boolean => {
+      const peer = peersRef.current.get(targetPeerId);
+      return peer ? peer.isConnected() : false;
+    },
+    []
+  );
+
+  // Connect to target peer and wait for RTCDataChannel readiness
   const connectToPeer = useCallback(
-    async (targetPeerId: string) => {
+    async (targetPeerId: string, timeoutMs: number = 12000): Promise<boolean> => {
+      const existing = peersRef.current.get(targetPeerId);
+      if (existing && existing.isConnected()) {
+        return true;
+      }
       const peer = getOrCreatePeer(targetPeerId, true);
       await peer.startOffer();
+
+      const startTime = Date.now();
+      while (Date.now() - startTime < timeoutMs) {
+        const current = peersRef.current.get(targetPeerId);
+        if (current && current.isConnected()) {
+          return true;
+        }
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      return peersRef.current.get(targetPeerId)?.isConnected() ?? false;
     },
     [getOrCreatePeer]
   );
@@ -826,6 +854,7 @@ export function useWebRTC(
     incomingClipboardPill,
     history,
     diagnostics,
+    isPeerConnected,
     connectToPeer,
     sendFile,
     sendFiles,
