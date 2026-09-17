@@ -58,6 +58,12 @@ export function isValidDataChannelMessage(data: unknown): data is DataChannelMes
       return typeof msg.transferId === 'string' && typeof msg.checksum === 'string';
     case 'text-share':
       return typeof msg.id === 'string' && typeof msg.text === 'string';
+    case 'clipboard-share':
+      return (
+        typeof msg.id === 'string' &&
+        typeof msg.content === 'string' &&
+        typeof msg.contentType === 'string'
+      );
     case 'rtt-ping':
     case 'rtt-pong':
       return typeof msg.timestamp === 'number';

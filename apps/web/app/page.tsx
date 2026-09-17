@@ -116,6 +116,7 @@ export default function Home() {
     diagnostics,
     connectToPeer,
     sendFile,
+    sendFiles,
     acceptIncomingTransfer,
     rejectIncomingTransfer,
     cancelTransfer,
@@ -124,6 +125,7 @@ export default function Home() {
     dismissClipboardPill,
     deleteClipboardItem,
     clearClipboardHistory,
+    clearHistory,
     clearCurrentTransfer,
   } = useWebRTC(device, sendSignal, setSignalHandler);
 
@@ -192,26 +194,84 @@ export default function Home() {
     }
   }, [peers, selectedPeer]);
 
-  // Handle sending files
+  // Handle connecting to peer with explicit pairing approval
+  const handleConnectPeer = async (peerId: string) => {
+    if (connectedPeerIds.includes(peerId)) {
+      return;
+    }
+    const target = peers.find((p) => p.deviceId === peerId);
+    const targetName = target ? target.deviceName : 'Device';
+
+    addToast('info', 'Pairing Request Sent', `Waiting for approval from ${targetName}...`);
+    try {
+      const accepted = await requestPairing(peerId);
+      if (accepted) {
+        await connectToPeer(peerId);
+        if (soundEnabled) soundEffects.playConnect();
+        addToast('success', 'Pairing Approved', `Connected to ${targetName}`);
+      } else {
+        addToast('error', 'Pairing Declined', `${targetName} declined or request timed out.`);
+      }
+    } catch (e) {
+      addToast('error', 'Connection Failed', 'Could not establish connection.');
+    }
+  };
+
+  const ensureConnected = async (peerId: string, peerName: string): Promise<boolean> => {
+    if (connectedPeerIds.includes(peerId)) {
+      return true;
+    }
+    addToast('info', 'Connecting first...', `Pairing with ${peerName} before transfer`);
+    try {
+      const accepted = await requestPairing(peerId);
+      if (accepted) {
+        await connectToPeer(peerId);
+        if (soundEnabled) soundEffects.playConnect();
+        addToast('success', 'Connected', `Paired with ${peerName}`);
+        let attempts = 30;
+        while (attempts > 0) {
+          await new Promise((r) => setTimeout(r, 100));
+          attempts--;
+        }
+        return true;
+      } else {
+        addToast('error', 'Pairing Declined', `${peerName} declined the connection request.`);
+        return false;
+      }
+    } catch (e) {
+      addToast('error', 'Connection Failed', `Could not connect to ${peerName}.`);
+      return false;
+    }
+  };
+
+  // Handle sending files with sequential queueing
   const handleSendFiles = async (files: File[]) => {
     if (!selectedPeer) return;
-    for (const file of files) {
-      await sendFile(selectedPeer.deviceId, file, selectedPeer.deviceName);
+    const isReady = await ensureConnected(selectedPeer.deviceId, selectedPeer.deviceName);
+    if (!isReady) return;
+    try {
+      await sendFiles(selectedPeer.deviceId, files, selectedPeer.deviceName);
+    } catch (err: any) {
+      addToast('error', 'Transfer Failed', err?.message || 'Could not send file');
     }
   };
 
   // Handle sending text
-  const handleSendText = (text: string) => {
+  const handleSendText = async (text: string) => {
     if (!selectedPeer) return;
+    const isReady = await ensureConnected(selectedPeer.deviceId, selectedPeer.deviceName);
+    if (!isReady) return;
     const ok = sendText(selectedPeer.deviceId, text);
     if (ok) {
       addToast('info', 'Text Sent', `Sent to ${selectedPeer.deviceName}`);
+    } else {
+      addToast('error', 'Send Failed', `Could not send text to ${selectedPeer.deviceName}`);
     }
   };
 
   const handleClearHistory = () => {
-    localStorage.removeItem('localdrop_history');
-    window.location.reload();
+    clearHistory();
+    addToast('info', 'History Cleared', 'Transfer history has been emptied.');
   };
 
   return (
@@ -332,7 +392,7 @@ export default function Home() {
             connectedPeerIds={connectedPeerIds}
             selectedPeerId={selectedPeer ? selectedPeer.deviceId : null}
             onSelectPeer={(p) => setSelectedPeer(p)}
-            onConnectPeer={(peerId) => connectToPeer(peerId)}
+            onConnectPeer={(peerId) => handleConnectPeer(peerId)}
             onOpenQR={() => setIsQrOpen(true)}
           />
 

@@ -74,6 +74,18 @@ describe('Protocol Message & State Validation', () => {
         senderName: 'Simran',
       })
     ).toBe(true);
+
+    expect(
+      isValidDataChannelMessage({
+        type: 'clipboard-share',
+        id: 'clip_1',
+        content: 'https://github.com/Cathhdyy/LocalDrop',
+        contentType: 'url',
+        senderName: 'Simran',
+        senderPlatform: 'windows',
+        timestamp: Date.now(),
+      })
+    ).toBe(true);
   });
 
   it('should validate transfer states correctly', () => {

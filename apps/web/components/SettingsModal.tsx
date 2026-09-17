@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Laptop, Palette, Check, ExternalLink, Volume2, VolumeX } from 'lucide-react';
+import Link from 'next/link';
+import { X, Laptop, Palette, Check, ExternalLink, Volume2, VolumeX, Terminal } from 'lucide-react';
 import { DeviceInfo } from '@localdrop/protocol';
 
 interface SettingsModalProps {
@@ -26,6 +27,8 @@ export function SettingsModal({
   onToggleTheme,
   soundEnabled = true,
   onToggleSound,
+  devMode = false,
+  onToggleDevMode,
 }: SettingsModalProps) {
   const [nameInput, setNameInput] = useState(device.deviceName);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -142,8 +145,45 @@ export function SettingsModal({
           </div>
         )}
 
-        {/* Source Code Info */}
+        {/* Developer Diagnostics Setting */}
+        {onToggleDevMode && (
+          <div className="pt-3 border-t border-border flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                Developer Diagnostics
+              </label>
+              <p className="text-[11px] text-muted-foreground">
+                Display live WebRTC ICE status, RTT latency, throughput, and event logs.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onToggleDevMode(!devMode)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 ${
+                devMode
+                  ? 'bg-blue-500/15 border-blue-500/30 text-blue-400'
+                  : 'bg-muted border-border text-muted-foreground'
+              }`}
+            >
+              {devMode ? 'Active' : 'Off'}
+            </button>
+          </div>
+        )}
+
+        {/* Version & Source Code Info */}
         <div className="pt-3 border-t border-border/80 flex flex-col gap-2.5 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Release Notes</span>
+            <Link
+              href="/changelog"
+              onClick={onClose}
+              className="text-blue-400 hover:text-blue-300 font-mono inline-flex items-center gap-1 transition-colors"
+            >
+              <span>v1.2.0 Changelog</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Source Code</span>
             <a

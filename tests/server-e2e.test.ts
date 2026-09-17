@@ -131,4 +131,93 @@ describe('Signaling Server & Room Pairing E2E', () => {
     wsA.close();
     wsB.close();
   });
+
+  it('should prevent senderPeerId spoofing and enforce authenticated socket identity', async () => {
+    const wsX = new WebSocket(wsUrl);
+    const wsY = new WebSocket(wsUrl);
+
+    await Promise.all([
+      new Promise<void>((resolve) => wsX.on('open', resolve)),
+      new Promise<void>((resolve) => wsY.on('open', resolve)),
+    ]);
+
+    const realDeviceX = {
+      deviceId: 'device-real-x',
+      deviceName: 'Real Device X',
+      platform: 'linux' as const,
+    };
+
+    const targetDeviceY = {
+      deviceId: 'device-target-y',
+      deviceName: 'Target Device Y',
+      platform: 'android' as const,
+    };
+
+    // Join room
+    wsX.send(JSON.stringify({ type: 'join-room', roomId: 'room-security', device: realDeviceX }));
+    wsY.send(JSON.stringify({ type: 'join-room', roomId: 'room-security', device: targetDeviceY }));
+
+    // Drain initial join messages
+    await new Promise((r) => setTimeout(r, 80));
+
+    // Device X attempts to send pairing request claiming to be someone else ('spoofed-peer-id')
+    const spoofPromise = new Promise<SignalingMessage>((resolve) => {
+      wsY.on('message', (data) => {
+        const parsed = JSON.parse(data.toString());
+        if (parsed.type === 'pairing-request') resolve(parsed);
+      });
+    });
+
+    wsX.send(
+      JSON.stringify({
+        type: 'pairing-request',
+        targetPeerId: targetDeviceY.deviceId,
+        senderPeerId: 'spoofed-peer-id', // <--- Forged ID
+        device: { deviceId: 'spoofed-peer-id', deviceName: 'Spoofed Device', platform: 'ios' },
+      })
+    );
+
+    const received = (await spoofPromise) as any;
+    // Server should override spoofed ID with the actual registered socket ID
+    expect(received.senderPeerId).toBe(realDeviceX.deviceId);
+    expect(received.device.deviceId).toBe(realDeviceX.deviceId);
+
+    wsX.close();
+    wsY.close();
+  });
+
+  it('should broadcast peer-left to old room when a peer switches rooms on the same socket', async () => {
+    const ws1 = new WebSocket(wsUrl);
+    const ws2 = new WebSocket(wsUrl);
+
+    await Promise.all([
+      new Promise<void>((resolve) => ws1.on('open', resolve)),
+      new Promise<void>((resolve) => ws2.on('open', resolve)),
+    ]);
+
+    const dev1 = { deviceId: 'dev-switch-1', deviceName: 'Device 1', platform: 'windows' as const };
+    const dev2 = { deviceId: 'dev-switch-2', deviceName: 'Device 2', platform: 'macos' as const };
+
+    ws1.send(JSON.stringify({ type: 'join-room', roomId: 'room-orig', device: dev1 }));
+    ws2.send(JSON.stringify({ type: 'join-room', roomId: 'room-orig', device: dev2 }));
+
+    await new Promise((r) => setTimeout(r, 60));
+
+    const leftPromise = new Promise<SignalingMessage>((resolve) => {
+      ws2.on('message', (data) => {
+        const parsed = JSON.parse(data.toString());
+        if (parsed.type === 'peer-left') resolve(parsed);
+      });
+    });
+
+    // dev1 switches to room-new on the same socket
+    ws1.send(JSON.stringify({ type: 'join-room', roomId: 'room-new', device: dev1 }));
+
+    const leftMsg = (await leftPromise) as any;
+    expect(leftMsg.type).toBe('peer-left');
+    expect(leftMsg.peerId).toBe(dev1.deviceId);
+
+    ws1.close();
+    ws2.close();
+  });
 });

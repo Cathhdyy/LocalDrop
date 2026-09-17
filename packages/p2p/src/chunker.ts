@@ -188,7 +188,7 @@ export class FileChunkSender {
       // Backpressure: Wait if RTCDataChannel buffer is full
       await this.waitForBufferDrain();
 
-      if (this.isCancelled) {
+      if (this.isCancelled || this.dataChannel.readyState !== 'open') {
         return false;
       }
 
@@ -200,7 +200,11 @@ export class FileChunkSender {
         chunkData
       );
 
-      this.dataChannel.send(packet);
+      try {
+        this.dataChannel.send(packet);
+      } catch (err) {
+        return false;
+      }
       bytesTransferred += chunkData.byteLength;
       bytesInWindow += chunkData.byteLength;
 
@@ -230,11 +234,11 @@ export class FileChunkSender {
     // Wait until remaining buffer is fully transmitted
     await this.waitForBufferEmpty();
 
-    return true;
+    return !this.isCancelled && this.dataChannel.readyState === 'open';
   }
 
   private async waitForBufferDrain(): Promise<void> {
-    if (this.dataChannel.bufferedAmount <= this.highWaterMark) {
+    if (this.dataChannel.readyState !== 'open' || this.dataChannel.bufferedAmount <= this.highWaterMark) {
       return;
     }
 
@@ -248,7 +252,11 @@ export class FileChunkSender {
 
       // Fallback check in case event is missed
       const interval = setInterval(() => {
-        if (this.dataChannel.bufferedAmount <= this.lowWaterMark || this.isCancelled) {
+        if (
+          this.dataChannel.readyState !== 'open' ||
+          this.dataChannel.bufferedAmount <= this.lowWaterMark ||
+          this.isCancelled
+        ) {
           clearInterval(interval);
           this.dataChannel.removeEventListener('bufferedamountlow', onBufferedAmountLow);
           resolve();
@@ -258,13 +266,17 @@ export class FileChunkSender {
   }
 
   private async waitForBufferEmpty(): Promise<void> {
-    if (this.dataChannel.bufferedAmount === 0) {
+    if (this.dataChannel.readyState !== 'open' || this.dataChannel.bufferedAmount === 0) {
       return;
     }
 
     return new Promise<void>((resolve) => {
       const interval = setInterval(() => {
-        if (this.dataChannel.bufferedAmount === 0 || this.isCancelled) {
+        if (
+          this.dataChannel.readyState !== 'open' ||
+          this.dataChannel.bufferedAmount === 0 ||
+          this.isCancelled
+        ) {
           clearInterval(interval);
           resolve();
         }

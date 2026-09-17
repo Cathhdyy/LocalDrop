@@ -24,6 +24,20 @@ export function QRPairingModal({ isOpen, onClose, roomId }: QRPairingModalProps)
     const protocol = window.location.protocol;
     setPrimaryIp(hostname);
     setLanUrl(`${protocol}//${hostname}${port}/?room=${roomId}`);
+
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      fetch('/api/network')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.primaryIp && data.primaryIp !== '127.0.0.1') {
+            setPrimaryIp(data.primaryIp);
+            setLanUrl(`${protocol}//${data.primaryIp}${port}/?room=${roomId}`);
+          }
+        })
+        .catch(() => {
+          // Keep default fallback
+        });
+    }
   }, [roomId]);
 
   if (!isOpen) return null;

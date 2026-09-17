@@ -58,4 +58,35 @@ describe('Device A ↔ Device B Simulated P2P File Transfer', () => {
     expect(completedBlob!.size).toBe(fileSize);
     expect(verifiedChecksum).toBe(expectedChecksum);
   });
+
+  it('should sanitize unsafe filenames and match UUID transfer IDs properly', async () => {
+    const uuidTransferId = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d';
+    const payload = new Uint8Array([65, 66, 67, 68]);
+    let done = false;
+    let savedBlob: Blob | null = null;
+
+    const receiver = new FileChunkReceiver({
+      transferId: uuidTransferId,
+      fileName: '../../unsafe/malicious.sh',
+      fileSize: 4,
+      mimeType: 'text/plain',
+      totalChunks: 1,
+      onComplete: (blob) => {
+        done = true;
+        savedBlob = blob;
+      },
+    });
+
+    // File name should be sanitized
+    expect(receiver.fileName).toBe('.._.._unsafe_malicious.sh');
+
+    // Chunker will truncate to 16 bytes in packet header
+    const packet = createBinaryChunkPacket(uuidTransferId, 0, 1, payload);
+    const accepted = await receiver.handleChunk(packet);
+
+    expect(accepted).toBe(true);
+    expect(done).toBe(true);
+    expect(savedBlob).not.toBeNull();
+    expect(savedBlob!.size).toBe(4);
+  });
 });

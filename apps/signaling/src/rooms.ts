@@ -24,6 +24,14 @@ export class RoomManager {
     roomId: string,
     device: DeviceInfo
   ): { peer: ConnectedPeer; existingPeers: DeviceInfo[] } {
+    const prevPeer = this.getPeerByWs(ws);
+    if (prevPeer && prevPeer.roomId !== roomId) {
+      this.broadcastToRoom(prevPeer.roomId, {
+        type: 'peer-left',
+        peerId: prevPeer.id,
+      });
+    }
+
     // Remove existing if any
     this.removePeerByWs(ws);
 
@@ -99,8 +107,12 @@ export class RoomManager {
     if (!peer || peer.ws.readyState !== WebSocket.OPEN) {
       return false;
     }
-    peer.ws.send(JSON.stringify(message));
-    return true;
+    try {
+      peer.ws.send(JSON.stringify(message));
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   public broadcastToRoom(roomId: string, message: SignalingMessage, excludePeerId?: string): void {
@@ -108,7 +120,9 @@ export class RoomManager {
     const serialized = JSON.stringify(message);
     for (const peer of peers) {
       if (peer.id !== excludePeerId && peer.ws.readyState === WebSocket.OPEN) {
-        peer.ws.send(serialized);
+        try {
+          peer.ws.send(serialized);
+        } catch (e) {}
       }
     }
   }
@@ -141,16 +155,18 @@ export class RoomManager {
     }
   }
 
-  public cleanStalePeers(timeoutMs: number): string[] {
+  public cleanStalePeers(timeoutMs: number): ConnectedPeer[] {
     const now = Date.now();
-    const removed: string[] = [];
-    for (const [peerId, peer] of this.peers.entries()) {
+    const removed: ConnectedPeer[] = [];
+    for (const [peerId, peer] of Array.from(this.peers.entries())) {
       if (now - peer.lastSeen > timeoutMs) {
+        const removedPeer = this.removePeerByWs(peer.ws);
+        if (removedPeer) {
+          removed.push(removedPeer);
+        }
         try {
           peer.ws.terminate();
         } catch (e) {}
-        this.removePeerByWs(peer.ws);
-        removed.push(peerId);
       }
     }
     return removed;

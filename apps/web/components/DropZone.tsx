@@ -113,10 +113,19 @@ export function DropZone({ selectedPeer, onSendFiles, disabled }: DropZoneProps)
     });
   };
 
+  const clearSelectedFiles = () => {
+    selectedFiles.forEach((f) => {
+      if (f.previewUrl) {
+        URL.revokeObjectURL(f.previewUrl);
+      }
+    });
+    setSelectedFiles([]);
+  };
+
   const handleSend = () => {
     if (selectedFiles.length === 0 || !selectedPeer) return;
     onSendFiles(selectedFiles.map((f) => f.file));
-    setSelectedFiles([]);
+    clearSelectedFiles();
   };
 
   return (
@@ -268,7 +277,7 @@ export function DropZone({ selectedPeer, onSendFiles, disabled }: DropZoneProps)
               </span>
             </span>
             <button
-              onClick={() => setSelectedFiles([])}
+              onClick={clearSelectedFiles}
               className="text-xs text-rose-400 hover:text-rose-300 transition-colors font-medium"
             >
               Clear all

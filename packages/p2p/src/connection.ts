@@ -26,6 +26,7 @@ export class P2PPeer {
   private lastBytesSent = 0;
   private lastBytesReceived = 0;
   private lastStatsTime = 0;
+  private pendingIceCandidates: any[] = [];
   private logs: Array<{ timestamp: number; level: 'info' | 'warn' | 'error'; message: string }> = [];
 
   constructor(peerId: string, isInitiator: boolean, callbacks: PeerConnectionCallbacks) {
@@ -130,6 +131,7 @@ export class P2PPeer {
     try {
       if (signal.type === 'offer') {
         await this.pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: signal.sdp }));
+        await this.drainPendingCandidates();
         const answer = await this.pc.createAnswer();
         await this.pc.setLocalDescription(answer);
         this.log('info', 'Handled offer and sent answer');
@@ -139,14 +141,38 @@ export class P2PPeer {
         });
       } else if (signal.type === 'answer') {
         await this.pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.sdp }));
+        await this.drainPendingCandidates();
         this.log('info', 'Handled remote answer');
       } else if (signal.type === 'candidate' && signal.candidate) {
-        await this.pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+        if (!this.pc.remoteDescription) {
+          this.log('info', 'Remote description not set yet; queueing ICE candidate');
+          this.pendingIceCandidates.push(signal.candidate);
+        } else {
+          await this.pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+        }
       }
     } catch (err: any) {
       this.log('error', `Signaling handling error: ${err.message}`);
       this.callbacks.onError?.(err);
     }
+  }
+
+  private async drainPendingCandidates(): Promise<void> {
+    if (this.pendingIceCandidates.length === 0) return;
+    this.log('info', `Draining ${this.pendingIceCandidates.length} queued ICE candidate(s)`);
+    const queued = [...this.pendingIceCandidates];
+    this.pendingIceCandidates = [];
+    for (const cand of queued) {
+      try {
+        await this.pc.addIceCandidate(new RTCIceCandidate(cand));
+      } catch (e: any) {
+        this.log('warn', `Failed to add queued ICE candidate: ${e?.message || e}`);
+      }
+    }
+  }
+
+  public updateCallbacks(newCallbacks: Partial<PeerConnectionCallbacks>): void {
+    this.callbacks = { ...this.callbacks, ...newCallbacks };
   }
 
   public sendControlMessage(msg: DataChannelMessage): boolean {

@@ -14,6 +14,7 @@ export interface SignalingServerOptions {
   port?: number;
   host?: string;
   server?: http.Server;
+  requirePairing?: boolean;
   onClientConnected?: (deviceInfo: any) => void;
   onClientDisconnected?: (deviceInfo: any) => void;
 }
@@ -62,6 +63,11 @@ export function createSignalingServer(options: SignalingServerOptions = {}) {
 
   const wss = new WebSocketServer({
     noServer: true,
+    maxPayload: 128 * 1024,
+  });
+
+  wss.on('error', () => {
+    // Prevent uncaught server-level error from terminating Node.js process
   });
 
   // Handle WebSocket upgrade
@@ -71,10 +77,19 @@ export function createSignalingServer(options: SignalingServerOptions = {}) {
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
       });
+    } else {
+      socket.destroy();
     }
   });
 
   wss.on('connection', (ws: WebSocket) => {
+    ws.on('error', () => {
+      // Prevent uncaught connection error from terminating Node.js process
+      try {
+        ws.terminate();
+      } catch (e) {}
+    });
+
     ws.on('message', (rawData) => {
       try {
         const text = rawData.toString();
@@ -123,18 +138,23 @@ export function createSignalingServer(options: SignalingServerOptions = {}) {
           }
 
           case 'pairing-request': {
-            const { targetPeerId, senderPeerId, device } = msg;
+            const currentPeer = roomManager.getPeerByWs(ws);
+            const senderPeerId = currentPeer ? currentPeer.id : msg.senderPeerId;
+            const sendingDevice = currentPeer ? currentPeer.device : msg.device;
+            const { targetPeerId } = msg;
             roomManager.sendToPeer(targetPeerId, {
               type: 'pairing-request',
               targetPeerId,
               senderPeerId,
-              device,
+              device: sendingDevice,
             });
             break;
           }
 
           case 'pairing-response': {
-            const { targetPeerId, senderPeerId, accepted } = msg;
+            const currentPeer = roomManager.getPeerByWs(ws);
+            const senderPeerId = currentPeer ? currentPeer.id : msg.senderPeerId;
+            const { targetPeerId, accepted } = msg;
             if (accepted) {
               roomManager.approvePairing(senderPeerId, targetPeerId);
             }
@@ -148,8 +168,22 @@ export function createSignalingServer(options: SignalingServerOptions = {}) {
           }
 
           case 'signal': {
-            const { targetPeerId, senderPeerId, signal } = msg;
-            // Relay WebRTC signal to target peer
+            const currentPeer = roomManager.getPeerByWs(ws);
+            const senderPeerId = currentPeer ? currentPeer.id : msg.senderPeerId;
+            const { targetPeerId, signal } = msg;
+
+            if (options.requirePairing && !roomManager.isPairingApproved(senderPeerId, targetPeerId)) {
+              ws.send(
+                JSON.stringify({
+                  type: 'error',
+                  message: 'Explicit device pairing authorization required before signaling',
+                  code: 'PAIRING_REQUIRED',
+                })
+              );
+              break;
+            }
+
+            // Relay WebRTC signal to target peer with authenticated senderPeerId
             roomManager.sendToPeer(targetPeerId, {
               type: 'signal',
               targetPeerId,
@@ -180,9 +214,13 @@ export function createSignalingServer(options: SignalingServerOptions = {}) {
 
   // Heartbeat interval to prune dead connections
   const heartbeatTimer = setInterval(() => {
-    const stale = roomManager.cleanStalePeers(HEARTBEAT_TIMEOUT_MS);
-    if (stale.length > 0) {
-      // peers cleaned
+    const stalePeers = roomManager.cleanStalePeers(HEARTBEAT_TIMEOUT_MS);
+    for (const peer of stalePeers) {
+      roomManager.broadcastToRoom(peer.roomId, {
+        type: 'peer-left',
+        peerId: peer.id,
+      });
+      options.onClientDisconnected?.(peer.device);
     }
   }, HEARTBEAT_INTERVAL_MS);
 

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Github, Shield, FileText, Scale, Sparkles, ExternalLink, Info } from 'lucide-react';
 import { LegalTab } from './LegalModal';
 
@@ -83,16 +84,16 @@ export function Footer({ onOpenAbout, onOpenLegal }: FooterProps) {
                 </a>
               </li>
               <li>
-                <a
-                  href="https://github.com/Cathhdyy/LocalDrop/releases"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/changelog"
                   className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors py-1 tap-target group"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Releases & Changelog</span>
-                  <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                </a>
+                  <Sparkles className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
+                  <span>What’s New & Changelog</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    v1.2.0
+                  </span>
+                </Link>
               </li>
             </ul>
           </div>

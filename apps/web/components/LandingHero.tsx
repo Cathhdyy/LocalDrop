@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion, type Variants } from 'framer-motion';
 import {
   Zap,
@@ -96,10 +97,18 @@ export function LandingHero({ onStartSharing }: LandingHeroProps) {
           {/* Left Column: Headline, subtext, and CTA */}
           <div className="lg:col-span-6 space-y-6 text-left">
             <motion.div variants={fadeInUp} custom={0}>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-xs font-semibold text-blue-400 backdrop-blur-md shadow-sm">
-                <Sparkles className="w-3.5 h-3.5" />
+              <Link
+                href="/changelog"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-xs font-semibold text-blue-400 backdrop-blur-md shadow-sm transition-all group"
+                title="View v1.2.0 Changelog"
+              >
+                <Sparkles className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
                 <span>AirDrop for EVERY device</span>
-              </div>
+                <span className="w-1 h-1 rounded-full bg-blue-400" />
+                <span className="font-mono text-[11px] text-blue-300 group-hover:underline flex items-center gap-0.5">
+                  v1.2.0 What’s New →
+                </span>
+              </Link>
             </motion.div>
 
             <motion.div variants={fadeInUp} custom={1} className="space-y-3">

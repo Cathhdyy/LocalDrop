@@ -10,6 +10,7 @@ import {
   SharedClipboardItem,
   WebRTCDiagnostics,
   RTCSignalPayload,
+  sanitizeFileName,
 } from '@localdrop/protocol';
 import {
   P2PPeer,
@@ -82,6 +83,69 @@ export function useWebRTC(
   const peersRef = useRef<Map<string, P2PPeer>>(new Map());
   const activeSenderRef = useRef<FileChunkSender | null>(null);
   const activeReceiverRef = useRef<FileChunkReceiver | null>(null);
+  const currentTransferRef = useRef<TransferProgress | null>(null);
+  const currentSenderMetaRef = useRef<{
+    transferId: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    peerId: string;
+    peerName: string;
+    startTime: number;
+    checksum?: string;
+  } | null>(null);
+  const handleDataChannelMessageRef = useRef<((senderPeerId: string, msg: DataChannelMessage) => void) | null>(null);
+  const transferQueueRef = useRef<Array<{ targetPeerId: string; file: File; peerName: string }>>([]);
+  const processNextQueueItemRef = useRef<(() => void) | null>(null);
+  const wakeLockRef = useRef<any>(null);
+
+  const updateCurrentTransfer = useCallback(
+    (updater: TransferProgress | null | ((prev: TransferProgress | null) => TransferProgress | null)) => {
+      setCurrentTransfer((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater;
+        currentTransferRef.current = next;
+        return next;
+      });
+    },
+    []
+  );
+
+  // Screen WakeLock to keep screen on during active transfers (iOS / Android)
+  useEffect(() => {
+    const isTransferring = currentTransfer?.state === 'TRANSFERRING';
+
+    const acquireLock = async () => {
+      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+        try {
+          if (!wakeLockRef.current) {
+            wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+            wakeLockRef.current.addEventListener('release', () => {
+              wakeLockRef.current = null;
+            });
+          }
+        } catch (e) {}
+      }
+    };
+
+    const releaseLock = async () => {
+      if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release();
+        } catch (e) {}
+        wakeLockRef.current = null;
+      }
+    };
+
+    if (isTransferring) {
+      acquireLock();
+    } else {
+      releaseLock();
+    }
+
+    return () => {
+      releaseLock();
+    };
+  }, [currentTransfer?.state]);
 
   // Load history & clipboard from localStorage
   useEffect(() => {
@@ -124,6 +188,29 @@ export function useWebRTC(
       const existing = peersRef.current.get(targetPeerId);
       if (existing) return existing;
 
+      const handlePeerDisconnect = () => {
+        setConnectedPeerIds((prev) => prev.filter((id) => id !== targetPeerId));
+        const current = currentTransferRef.current;
+        if (
+          current &&
+          current.peerId === targetPeerId &&
+          (current.state === 'WAITING' || current.state === 'TRANSFERRING')
+        ) {
+          if (activeSenderRef.current) {
+            activeSenderRef.current.cancel();
+            activeSenderRef.current = null;
+          }
+          if (activeReceiverRef.current) {
+            activeReceiverRef.current.cancel();
+            activeReceiverRef.current = null;
+          }
+          updateCurrentTransfer((prev) =>
+            prev ? { ...prev, state: 'FAILED', error: 'Connection lost' } : null
+          );
+          processNextQueueItemRef.current?.();
+        }
+      };
+
       const peer = new P2PPeer(targetPeerId, isInitiator, {
         onSignal: (sig) => {
           sendSignal(targetPeerId, sig);
@@ -140,10 +227,15 @@ export function useWebRTC(
           });
         },
         onDataChannelClose: () => {
-          setConnectedPeerIds((prev) => prev.filter((id) => id !== targetPeerId));
+          handlePeerDisconnect();
+        },
+        onConnectionStateChange: (state) => {
+          if (state === 'failed' || state === 'closed' || state === 'disconnected') {
+            handlePeerDisconnect();
+          }
         },
         onMessage: (msg: DataChannelMessage) => {
-          handleDataChannelMessage(targetPeerId, msg);
+          handleDataChannelMessageRef.current?.(targetPeerId, msg);
         },
         onBinaryChunk: (buffer: ArrayBuffer) => {
           if (activeReceiverRef.current) {
@@ -162,7 +254,7 @@ export function useWebRTC(
       setActivePeers(new Map(peersRef.current));
       return peer;
     },
-    [device, sendSignal]
+    [device, sendSignal, updateCurrentTransfer]
   );
 
   // Connect to target peer
@@ -188,9 +280,10 @@ export function useWebRTC(
     (senderPeerId: string, msg: DataChannelMessage) => {
       switch (msg.type) {
         case 'transfer-request': {
+          const safeFileName = sanitizeFileName(msg.fileName);
           setIncomingTransfer({
             transferId: msg.transferId,
-            fileName: msg.fileName,
+            fileName: safeFileName,
             fileSize: msg.fileSize,
             mimeType: msg.mimeType,
             senderName: 'Connected Peer',
@@ -204,35 +297,57 @@ export function useWebRTC(
         case 'transfer-accept': {
           // Peer accepted our transfer request; start sending binary chunks
           if (activeSenderRef.current) {
-            setCurrentTransfer((prev) => (prev ? { ...prev, state: 'TRANSFERRING' } : null));
-            activeSenderRef.current.send().then((success) => {
-              if (success && currentTransfer) {
-                const peer = peersRef.current.get(senderPeerId);
-                peer?.sendControlMessage({
-                  type: 'transfer-complete',
-                  transferId: currentTransfer.transferId,
-                  checksum: currentTransfer.checksum || '',
-                  totalBytes: currentTransfer.totalBytes,
-                });
+            updateCurrentTransfer((prev) => (prev ? { ...prev, state: 'TRANSFERRING' } : null));
+            const meta = currentSenderMetaRef.current;
+            activeSenderRef.current
+              .send()
+              .then((success) => {
+                if (success && meta) {
+                  const peer = peersRef.current.get(senderPeerId);
+                  peer?.sendControlMessage({
+                    type: 'transfer-complete',
+                    transferId: meta.transferId,
+                    checksum: meta.checksum || '',
+                    totalBytes: meta.fileSize,
+                  });
 
-                setCurrentTransfer((prev) => (prev ? { ...prev, state: 'COMPLETED' } : null));
+                  updateCurrentTransfer((prev) => (prev ? { ...prev, state: 'COMPLETED' } : null));
 
-                saveHistoryItem({
-                  id: currentTransfer.transferId,
-                  fileName: currentTransfer.fileName,
-                  fileSize: currentTransfer.totalBytes,
-                  mimeType: currentTransfer.mimeType,
-                  direction: 'sent',
-                  peerName: currentTransfer.peerName,
-                  peerId: senderPeerId,
-                  state: 'COMPLETED',
-                  timestamp: Date.now(),
-                  durationMs: Date.now() - currentTransfer.startTime,
-                  speedAvgBytesPerSec: currentTransfer.averageSpeed || currentTransfer.currentSpeed,
-                  checksum: currentTransfer.checksum,
-                });
-              }
-            });
+                  const durationMs = Math.max(1, Date.now() - meta.startTime);
+                  const avgSpeed = (meta.fileSize / durationMs) * 1000;
+
+                  saveHistoryItem({
+                    id: meta.transferId,
+                    fileName: meta.fileName,
+                    fileSize: meta.fileSize,
+                    mimeType: meta.mimeType,
+                    direction: 'sent',
+                    peerName: meta.peerName,
+                    peerId: senderPeerId,
+                    state: 'COMPLETED',
+                    timestamp: Date.now(),
+                    durationMs,
+                    speedAvgBytesPerSec: avgSpeed,
+                    checksum: meta.checksum,
+                  });
+
+                  activeSenderRef.current = null;
+                  processNextQueueItemRef.current?.();
+                } else if (!success) {
+                  updateCurrentTransfer((prev) =>
+                    prev ? { ...prev, state: 'FAILED', error: 'Transfer aborted or connection lost' } : null
+                  );
+                  activeSenderRef.current = null;
+                  processNextQueueItemRef.current?.();
+                }
+              })
+              .catch((err) => {
+                updateCurrentTransfer((prev) =>
+                  prev ? { ...prev, state: 'FAILED', error: err?.message || 'Transfer failed' } : null
+                );
+                activeSenderRef.current = null;
+                processNextQueueItemRef.current?.();
+              });
           }
           break;
         }
@@ -242,9 +357,11 @@ export function useWebRTC(
             activeSenderRef.current.cancel();
             activeSenderRef.current = null;
           }
-          setCurrentTransfer((prev) =>
+          updateCurrentTransfer((prev) =>
             prev ? { ...prev, state: 'CANCELLED', error: msg.reason || 'Declined by recipient' } : null
           );
+          setIncomingTransfer(null);
+          processNextQueueItemRef.current?.();
           break;
         }
 
@@ -257,8 +374,9 @@ export function useWebRTC(
             activeSenderRef.current.cancel();
             activeSenderRef.current = null;
           }
-          setCurrentTransfer((prev) => (prev ? { ...prev, state: 'CANCELLED' } : null));
+          updateCurrentTransfer((prev) => (prev ? { ...prev, state: 'CANCELLED' } : null));
           setIncomingTransfer(null);
+          processNextQueueItemRef.current?.();
           break;
         }
 
@@ -303,11 +421,15 @@ export function useWebRTC(
         }
       }
     },
-    [currentTransfer, saveHistoryItem, saveClipboardItem]
+    [saveHistoryItem, saveClipboardItem, updateCurrentTransfer]
   );
 
-  // Send a file to a peer
-  const sendFile = useCallback(
+  useEffect(() => {
+    handleDataChannelMessageRef.current = handleDataChannelMessage;
+  }, [handleDataChannelMessage]);
+
+  // Send a file to a peer directly
+  const startSendFile = useCallback(
     async (targetPeerId: string, file: File, peerName: string) => {
       const peer = peersRef.current.get(targetPeerId);
       if (!peer || !peer.isConnected()) {
@@ -318,11 +440,11 @@ export function useWebRTC(
       const chunkSize = 64 * 1024;
       const totalChunks = Math.ceil(file.size / chunkSize) || 1;
 
-      // Pre-calculate SHA-256 checksum for small/medium files (< 100MB) for integrity verification
+      // Pre-calculate SHA-256 checksum for files <= 100MB across entire file
       let checksum: string | undefined = undefined;
       if (file.size <= 100 * 1024 * 1024) {
         try {
-          const buffer = await file.slice(0, Math.min(file.size, 10 * 1024 * 1024)).arrayBuffer();
+          const buffer = await file.arrayBuffer();
           checksum = await calculateSHA256(buffer);
         } catch (e) {}
       }
@@ -330,7 +452,7 @@ export function useWebRTC(
       const sender = new FileChunkSender(file, transferId, peer.getDataChannel()!, {
         chunkSize,
         onProgress: (p) => {
-          setCurrentTransfer((prev) =>
+          updateCurrentTransfer((prev) =>
             prev
               ? {
                   ...prev,
@@ -366,7 +488,18 @@ export function useWebRTC(
         checksum,
       };
 
-      setCurrentTransfer(progressItem);
+      currentSenderMetaRef.current = {
+        transferId,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type || 'application/octet-stream',
+        peerId: targetPeerId,
+        peerName,
+        startTime: Date.now(),
+        checksum,
+      };
+
+      updateCurrentTransfer(progressItem);
 
       // Send transfer request
       peer.sendControlMessage({
@@ -380,7 +513,48 @@ export function useWebRTC(
         checksum,
       });
     },
-    []
+    [updateCurrentTransfer]
+  );
+
+  const processNextQueueItem = useCallback(() => {
+    if (transferQueueRef.current.length === 0) return;
+    const nextItem = transferQueueRef.current.shift();
+    if (nextItem) {
+      startSendFile(nextItem.targetPeerId, nextItem.file, nextItem.peerName).catch((err) => {
+        updateCurrentTransfer((prev) =>
+          prev ? { ...prev, state: 'FAILED', error: err?.message || 'Failed to start file transfer' } : null
+        );
+      });
+    }
+  }, [startSendFile, updateCurrentTransfer]);
+
+  useEffect(() => {
+    processNextQueueItemRef.current = processNextQueueItem;
+  }, [processNextQueueItem]);
+
+  // Send a file with queue support
+  const sendFile = useCallback(
+    async (targetPeerId: string, file: File, peerName: string) => {
+      const active = currentTransferRef.current;
+      if (
+        activeSenderRef.current !== null ||
+        (active && (active.state === 'WAITING' || active.state === 'TRANSFERRING'))
+      ) {
+        transferQueueRef.current.push({ targetPeerId, file, peerName });
+        return;
+      }
+      await startSendFile(targetPeerId, file, peerName);
+    },
+    [startSendFile]
+  );
+
+  const sendFiles = useCallback(
+    async (targetPeerId: string, files: File[], peerName: string) => {
+      for (const file of files) {
+        await sendFile(targetPeerId, file, peerName);
+      }
+    },
+    [sendFile]
   );
 
   // Accept incoming transfer
@@ -401,7 +575,7 @@ export function useWebRTC(
       totalChunks,
       expectedChecksum: checksum,
       onProgress: (p) => {
-        setCurrentTransfer((prev) =>
+        updateCurrentTransfer((prev) =>
           prev
             ? {
                 ...prev,
@@ -417,7 +591,10 @@ export function useWebRTC(
         // Trigger file download
         FileChunkReceiver.triggerDownload(blob, fileName);
 
-        setCurrentTransfer((prev) => (prev ? { ...prev, state: 'COMPLETED' } : null));
+        updateCurrentTransfer((prev) => (prev ? { ...prev, state: 'COMPLETED' } : null));
+
+        const startTime = currentTransferRef.current?.startTime || Date.now();
+        const durationMs = Math.max(1, Date.now() - startTime);
 
         saveHistoryItem({
           id: transferId,
@@ -429,23 +606,24 @@ export function useWebRTC(
           peerId,
           state: 'COMPLETED',
           timestamp: Date.now(),
-          durationMs: Date.now() - (currentTransfer?.startTime || Date.now()),
-          speedAvgBytesPerSec: currentTransfer?.currentSpeed || 0,
+          durationMs,
+          speedAvgBytesPerSec: (fileSize / durationMs) * 1000,
           checksum: actualChecksum,
         });
 
         activeReceiverRef.current = null;
       },
       onError: (err) => {
-        setCurrentTransfer((prev) =>
+        updateCurrentTransfer((prev) =>
           prev ? { ...prev, state: 'FAILED', error: err.message } : null
         );
+        activeReceiverRef.current = null;
       },
     });
 
     activeReceiverRef.current = receiver;
 
-    setCurrentTransfer({
+    updateCurrentTransfer({
       transferId,
       fileName,
       fileSize,
@@ -471,7 +649,7 @@ export function useWebRTC(
     });
 
     setIncomingTransfer(null);
-  }, [incomingTransfer, currentTransfer, saveHistoryItem]);
+  }, [incomingTransfer, saveHistoryItem, updateCurrentTransfer]);
 
   // Reject incoming transfer
   const rejectIncomingTransfer = useCallback(() => {
@@ -487,6 +665,7 @@ export function useWebRTC(
 
   // Cancel active transfer
   const cancelTransfer = useCallback(() => {
+    transferQueueRef.current = [];
     if (activeSenderRef.current) {
       activeSenderRef.current.cancel();
       activeSenderRef.current = null;
@@ -496,30 +675,31 @@ export function useWebRTC(
       activeReceiverRef.current = null;
     }
 
-    if (currentTransfer) {
-      const peer = peersRef.current.get(currentTransfer.peerId);
+    const current = currentTransferRef.current;
+    if (current) {
+      const peer = peersRef.current.get(current.peerId);
       peer?.sendControlMessage({
         type: 'transfer-cancel',
-        transferId: currentTransfer.transferId,
+        transferId: current.transferId,
       });
 
       saveHistoryItem({
-        id: currentTransfer.transferId,
-        fileName: currentTransfer.fileName,
-        fileSize: currentTransfer.totalBytes,
-        mimeType: currentTransfer.mimeType,
-        direction: currentTransfer.direction === 'sending' ? 'sent' : 'received',
-        peerName: currentTransfer.peerName,
-        peerId: currentTransfer.peerId,
+        id: current.transferId,
+        fileName: current.fileName,
+        fileSize: current.totalBytes,
+        mimeType: current.mimeType,
+        direction: current.direction === 'sending' ? 'sent' : 'received',
+        peerName: current.peerName,
+        peerId: current.peerId,
         state: 'CANCELLED',
         timestamp: Date.now(),
-        durationMs: Date.now() - currentTransfer.startTime,
-        speedAvgBytesPerSec: currentTransfer.currentSpeed,
+        durationMs: Date.now() - current.startTime,
+        speedAvgBytesPerSec: current.currentSpeed,
       });
 
-      setCurrentTransfer((prev) => (prev ? { ...prev, state: 'CANCELLED' } : null));
+      updateCurrentTransfer((prev) => (prev ? { ...prev, state: 'CANCELLED' } : null));
     }
-  }, [currentTransfer, saveHistoryItem]);
+  }, [saveHistoryItem, updateCurrentTransfer]);
 
   // Send shared text
   const sendText = useCallback(
@@ -630,6 +810,13 @@ export function useWebRTC(
     } catch (e) {}
   }, []);
 
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    try {
+      localStorage.removeItem('localdrop_history');
+    } catch (e) {}
+  }, []);
+
   return {
     connectedPeerIds,
     currentTransfer,
@@ -641,6 +828,7 @@ export function useWebRTC(
     diagnostics,
     connectToPeer,
     sendFile,
+    sendFiles,
     acceptIncomingTransfer,
     rejectIncomingTransfer,
     cancelTransfer,
@@ -649,6 +837,7 @@ export function useWebRTC(
     dismissClipboardPill,
     deleteClipboardItem,
     clearClipboardHistory,
-    clearCurrentTransfer: () => setCurrentTransfer(null),
+    clearHistory,
+    clearCurrentTransfer: () => updateCurrentTransfer(null),
   };
 }

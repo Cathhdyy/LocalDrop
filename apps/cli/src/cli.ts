@@ -49,7 +49,18 @@ function createWebFileHandler(webDistPath: string) {
     let reqPath = (req.url || '/').split('?')[0];
     if (reqPath === '/' || reqPath === '') reqPath = '/index.html';
 
-    let filePath = path.join(webDistPath, reqPath);
+    // Normalize and prevent path traversal
+    const normalizedReq = path.normalize(reqPath).replace(/^(\.\.[\/\\])+/, '');
+    const resolvedPath = path.resolve(webDistPath, '.' + path.sep + normalizedReq);
+    const rootPath = path.resolve(webDistPath);
+
+    if (!resolvedPath.startsWith(rootPath)) {
+      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Forbidden');
+      return true;
+    }
+
+    let filePath = resolvedPath;
 
     // If requesting a directory or without extension, check for .html
     if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {

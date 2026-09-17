@@ -162,8 +162,12 @@ export function useSignaling(device: DeviceInfo, roomId: string) {
         return;
       }
 
+      let timeoutTimer: NodeJS.Timeout | null = null;
+
       pairingResponseHandlerRef.current = (senderId, accepted) => {
         if (senderId === targetPeerId) {
+          if (timeoutTimer) clearTimeout(timeoutTimer);
+          pairingResponseHandlerRef.current = null;
           resolve(accepted);
         }
       };
@@ -178,7 +182,10 @@ export function useSignaling(device: DeviceInfo, roomId: string) {
       );
 
       // Timeout pairing request after 30s
-      setTimeout(() => resolve(false), 30000);
+      timeoutTimer = setTimeout(() => {
+        pairingResponseHandlerRef.current = null;
+        resolve(false);
+      }, 30000);
     });
   }, [device]);
 

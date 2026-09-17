@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   QrCode,
   Settings,
@@ -90,6 +91,14 @@ export function Navbar({
             <span className="hidden xs:inline-flex text-[9px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 leading-none">
               P2P
             </span>
+            <Link
+              href="/changelog"
+              onClick={(e) => e.stopPropagation()}
+              className="hidden sm:inline-flex items-center text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-white/[0.04] hover:bg-blue-500/10 text-muted-foreground hover:text-blue-400 border border-white/[0.07] hover:border-blue-500/30 transition-all leading-none"
+              title="View Changelog (v1.2.0)"
+            >
+              v1.2.0
+            </Link>
             {/* Mobile status indicator dot */}
             <span
               className={`md:hidden w-2 h-2 rounded-full shrink-0 ${
