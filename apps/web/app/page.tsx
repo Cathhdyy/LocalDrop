@@ -11,7 +11,6 @@ import { QRPairingModal } from '../components/QRPairingModal';
 import { PrivacyModal } from '../components/PrivacyBadge';
 import { SettingsModal } from '../components/SettingsModal';
 import { DevModePanel } from '../components/DevModePanel';
-import { LandingHero } from '../components/LandingHero';
 import { Footer } from '../components/Footer';
 import { LegalModal, LegalTab } from '../components/LegalModal';
 import { ToastContainer, ToastMessage } from '../components/Toast';
@@ -27,7 +26,6 @@ import { Files, MessageSquareText, Zap, ShieldAlert, Smartphone, Sparkles } from
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'files' | 'text' | 'clipboard'>('files');
   const [autoSyncClipboard, setAutoSyncClipboard] = useState(true);
-  const [viewMode, setViewMode] = useState<'landing' | 'app'>('app');
   const [selectedPeer, setSelectedPeer] = useState<DeviceInfo | null>(null);
   const [roomId, setRoomId] = useState<string>('localdrop-lan');
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -63,14 +61,6 @@ export default function Home() {
       const roomParam = params.get('room');
       if (roomParam) {
         setRoomId(roomParam);
-        setViewMode('app');
-      } else {
-        const lastView = localStorage.getItem('localdrop_last_view');
-        if (lastView === 'landing') {
-          setViewMode('landing');
-        } else {
-          setViewMode('app');
-        }
       }
 
       const storedSound = localStorage.getItem('localdrop_sound');
@@ -301,24 +291,12 @@ export default function Home() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
         onLogoClick={() => {
-          setViewMode('landing');
-          localStorage.setItem('localdrop_last_view', 'landing');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
       />
 
-      {/* Landing or App View */}
-      {viewMode === 'landing' ? (
-        <main className="flex-1 pb-16 animate-fade-in">
-          <LandingHero
-            onStartSharing={() => {
-              setViewMode('app');
-              localStorage.setItem('localdrop_last_view', 'app');
-            }}
-          />
-        </main>
-      ) : (
-        <main className="flex-1 max-w-4xl w-full mx-auto px-3.5 sm:px-6 pt-3 sm:pt-6 pb-32 sm:pb-16 space-y-4 sm:space-y-6 animate-fade-in">
+      {/* Main Core File & Text Sharing Interface */}
+      <main className="flex-1 max-w-4xl w-full mx-auto px-3.5 sm:px-6 pt-3 sm:pt-6 pb-32 sm:pb-16 space-y-4 sm:space-y-6 animate-fade-in">
           {/* Sub-header navigation & Mode Switch */}
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Files / Text / Clipboard tab switcher */}
@@ -360,20 +338,6 @@ export default function Home() {
                 )}
               </button>
             </div>
-
-            {/* About Page Toggle Button */}
-            <button
-              onClick={() => {
-                setViewMode('landing');
-                localStorage.setItem('localdrop_last_view', 'landing');
-              }}
-              title="Learn more about LocalDrop"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted border border-white/[0.06] transition-all shrink-0 active:scale-95 whitespace-nowrap"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-              <span className="hidden sm:inline">About LocalDrop</span>
-              <span className="sm:hidden">About</span>
-            </button>
           </div>
 
           {/* Active Transfer Card */}
@@ -434,9 +398,8 @@ export default function Home() {
           {/* Developer Mode Diagnostics Panel */}
           <DevModePanel diagnostics={diagnostics} isVisible={devMode} />
         </main>
-      )}
 
-      {/* Incoming Pairing Request Modal */}
+        {/* Incoming Pairing Request Modal */}
       {incomingPairingRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-sm p-6 rounded-3xl bg-card border border-border shadow-2xl space-y-5 animate-slide-up text-center">
@@ -512,11 +475,6 @@ export default function Home() {
 
       {/* Universal Responsive Footer */}
       <Footer
-        onOpenAbout={() => {
-          setViewMode('landing');
-          localStorage.setItem('localdrop_last_view', 'landing');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
         onOpenLegal={handleOpenLegal}
       />
 

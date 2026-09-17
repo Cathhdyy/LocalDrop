@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { X, Laptop, Palette, Check, ExternalLink, Volume2, VolumeX, Terminal } from 'lucide-react';
 import { DeviceInfo } from '@localdrop/protocol';
 
@@ -171,19 +170,8 @@ export function SettingsModal({
           </div>
         )}
 
-        {/* Version & Source Code Info */}
+        {/* Source Code Info */}
         <div className="pt-3 border-t border-border/80 flex flex-col gap-2.5 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Release Notes</span>
-            <Link
-              href="/changelog"
-              onClick={onClose}
-              className="text-blue-400 hover:text-blue-300 font-mono inline-flex items-center gap-1 transition-colors"
-            >
-              <span>v1.2.0 Changelog</span>
-              <ExternalLink className="w-3 h-3" />
-            </Link>
-          </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Source Code</span>
             <a

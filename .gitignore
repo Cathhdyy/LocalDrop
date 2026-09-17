@@ -31,3 +31,8 @@ yarn-error.log*
 Thumbs.db
 
 .vercel
+
+# Standalone in-web changelog (deployed directly to web, excluded from GitHub repo)
+apps/web/app/changelog/
+apps/web/data/
+
