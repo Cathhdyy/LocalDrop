@@ -208,7 +208,7 @@ export default function Home() {
       const accepted = await requestPairing(peerId);
       if (accepted) {
         addToast('info', 'Connecting...', `Establishing direct link with ${targetName}...`);
-        const connected = await connectToPeer(peerId, 12000);
+        const connected = await connectToPeer(peerId, 25000);
         if (connected) {
           if (soundEnabled) soundEffects.playConnect();
           addToast('success', 'Connected', `Paired with ${targetName}`);
@@ -232,7 +232,7 @@ export default function Home() {
       const accepted = await requestPairing(peerId);
       if (accepted) {
         addToast('info', 'Connecting...', `Establishing direct link with ${peerName}...`);
-        const connected = await connectToPeer(peerId, 12000);
+        const connected = await connectToPeer(peerId, 25000);
         if (connected) {
           if (soundEnabled) soundEffects.playConnect();
           addToast('success', 'Connected', `Paired with ${peerName}`);

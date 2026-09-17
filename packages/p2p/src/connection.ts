@@ -96,6 +96,14 @@ export class P2PPeer {
       this.callbacks.onDataChannelOpen?.();
     };
 
+    // WebKit / iOS Safari quirk: channel can already be 'open' when ondatachannel fires
+    if (this.dataChannel.readyState === 'open') {
+      this.log('info', 'RTCDataChannel was already open on setup');
+      setTimeout(() => {
+        this.callbacks.onDataChannelOpen?.();
+      }, 0);
+    }
+
     this.dataChannel.onclose = () => {
       this.log('warn', 'RTCDataChannel closed');
       this.callbacks.onDataChannelClose?.();
@@ -179,7 +187,7 @@ export class P2PPeer {
           this.pendingIceCandidates.push(signal.candidate);
         } else {
           try {
-            await this.pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+            await this.pc.addIceCandidate(signal.candidate);
           } catch (e: any) {
             this.log('warn', `Failed to add ICE candidate: ${e?.message || e}`);
           }
@@ -198,7 +206,9 @@ export class P2PPeer {
     this.pendingIceCandidates = [];
     for (const cand of queued) {
       try {
-        await this.pc.addIceCandidate(new RTCIceCandidate(cand));
+        if (cand) {
+          await this.pc.addIceCandidate(cand);
+        }
       } catch (e: any) {
         this.log('warn', `Failed to add queued ICE candidate: ${e?.message || e}`);
       }
@@ -223,6 +233,16 @@ export class P2PPeer {
 
   public isConnected(): boolean {
     return this.dataChannel !== null && this.dataChannel.readyState === 'open';
+  }
+
+  public isClosedOrFailed(): boolean {
+    return (
+      this.pc.signalingState === 'closed' ||
+      this.pc.connectionState === 'closed' ||
+      this.pc.connectionState === 'failed' ||
+      this.pc.iceConnectionState === 'closed' ||
+      this.pc.iceConnectionState === 'failed'
+    );
   }
 
   private startStatsMonitor() {

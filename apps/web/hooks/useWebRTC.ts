@@ -184,12 +184,30 @@ export function useWebRTC(
 
   // Initialize or retrieve a peer connection
   const getOrCreatePeer = useCallback(
-    (targetPeerId: string, isInitiator: boolean): P2PPeer => {
+    (targetPeerId: string, isInitiator: boolean, forceFresh = false): P2PPeer => {
       const existing = peersRef.current.get(targetPeerId);
-      if (existing) return existing;
+      if (existing) {
+        if (forceFresh || existing.isClosedOrFailed()) {
+          existing.close();
+          peersRef.current.delete(targetPeerId);
+        } else if (!isInitiator || existing.isInitiator) {
+          return existing;
+        } else {
+          // Recreate if existing peer was non-initiator but we now need to initiate with a data channel
+          existing.close();
+          peersRef.current.delete(targetPeerId);
+        }
+      }
 
       const handlePeerDisconnect = () => {
         setConnectedPeerIds((prev) => prev.filter((id) => id !== targetPeerId));
+        const deadPeer = peersRef.current.get(targetPeerId);
+        if (deadPeer) {
+          deadPeer.close();
+          peersRef.current.delete(targetPeerId);
+          setActivePeers(new Map(peersRef.current));
+        }
+
         const current = currentTransferRef.current;
         if (
           current &&
@@ -273,12 +291,13 @@ export function useWebRTC(
 
   // Connect to target peer and wait for RTCDataChannel readiness
   const connectToPeer = useCallback(
-    async (targetPeerId: string, timeoutMs: number = 12000): Promise<boolean> => {
+    async (targetPeerId: string, timeoutMs: number = 25000): Promise<boolean> => {
       const existing = peersRef.current.get(targetPeerId);
       if (existing && existing.isConnected()) {
         return true;
       }
-      const peer = getOrCreatePeer(targetPeerId, true);
+      // Force a fresh peer connection to avoid any stale state from prior failed attempts
+      const peer = getOrCreatePeer(targetPeerId, true, true);
       await peer.startOffer();
 
       const startTime = Date.now();
@@ -286,6 +305,9 @@ export function useWebRTC(
         const current = peersRef.current.get(targetPeerId);
         if (current && current.isConnected()) {
           return true;
+        }
+        if (current && current.isClosedOrFailed()) {
+          return false;
         }
         await new Promise((r) => setTimeout(r, 100));
       }
