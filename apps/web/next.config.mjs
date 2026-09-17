@@ -8,6 +8,11 @@ const nextConfig = {
     unoptimized: true,
   },
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_SIGNALING_URL:
+      process.env.NEXT_PUBLIC_SIGNALING_URL ||
+      (isVercel ? 'https://localdrop-signaling-production.up.railway.app' : ''),
+  },
 };
 
 export default nextConfig;

@@ -36,12 +36,27 @@ export function useSignaling(device: DeviceInfo, roomId: string) {
         wsUrl = wsUrl.replace(/\/$/, '') + '/ws';
       }
     } else {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      let host = window.location.host;
-      if (host.includes(':3000')) {
-        host = window.location.hostname + ':8787';
+      const hostname = window.location.hostname;
+      const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isLocalIP =
+        /^192\.168\./.test(hostname) ||
+        /^10\./.test(hostname) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+
+      if (isLocalHost || isLocalIP) {
+        // Local CLI or local dev server
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        let host = window.location.host;
+        if (host.includes(':3000')) {
+          host = hostname + ':8787';
+        }
+        wsUrl = `${protocol}//${host}/ws`;
+      } else {
+        // Cloud production (Vercel, custom domains, etc.)
+        // Serverless Vercel frontend cannot host persistent WebSockets,
+        // so route signaling to the Railway production signaling cluster.
+        wsUrl = 'wss://localdrop-signaling-production.up.railway.app/ws';
       }
-      wsUrl = `${protocol}//${host}/ws`;
     }
 
     setStatus('connecting');
@@ -52,6 +67,7 @@ export function useSignaling(device: DeviceInfo, roomId: string) {
 
       ws.onopen = () => {
         setStatus('connected');
+        console.log('[LocalDrop Signaling] Connected to', wsUrl);
         // Join room with our device info
         ws.send(
           JSON.stringify({
